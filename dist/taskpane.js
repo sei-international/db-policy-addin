@@ -1,6 +1,6 @@
 let _initialized = false;
 let isConnected = false;
-export const COUNTRY_GROUPINGS = [
+const COUNTRY_GROUPINGS = [
   {
     "iso3c": "AFG",
     "Country": "Afghanistan",

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="stylesheet" href="taskpane.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Excel DB Connector</title>
+</head>
+<body data-theme="light">
+  <div class="header">
+    <svg viewBox="0 0 24 24" fill="currentColor">
+      <path d="M4 4h16v4H4zM4 10h16v4H4zM4 16h16v4H4z" />
+    </svg>
+    <span>Policies Database Connector</span>
+  </div>
+
+  <div class="tabs">
+    <div id="tab-connect" class="tab active">Login</div>
+    <div id="tab-pull"    class="tab disabled">Connections</div>
+    <div id="tab-push"    class="tab disabled">Admin</div>
+  </div>
+  
+  <div id="panel-connect" class="content" style="display:block;">
+    <form id="connectForm">
+      <label>User: <input name="user" required /></label><br/>
+      <label>Password: <input name="password" type="password" required /></label><br/>
+      <button type="submit">Connect</button>
+      <div id="connectStatus"></div>
+    </form>
+  </div>
+  
+  <div id="panel-pull" class="content" style="display:none;">
+    <h2>Pull Data</h2>
+    <p>Import data into Excel.</p>
+    <div class="controls">
+        <div id="tableCheckboxContainer"></div>
+        <button id="pull" >Pull</button>
+      </div>
+      <button id="push" >Push</button>
+      <div style="margin-top:1em;">
+        <label for="docCodeInput">Doc Code:</label>
+        <input type="text" id="docCodeInput" placeholder="e.g. ABC123" />
+        <button id="pullOneBtn">Pull One</button>
+      </div>
+      <div id="status">Ready</div>
+      <div id="confirmDialog" class="confirm-modal">
+        <div class="confirm-content">
+          <p id="confirmMessage"></p>
+          <button id="confirmYes">Yes</button>
+          <button id="confirmNo">No</button>
+        </div>
+      </div>
+    
+      <div id="reminderModal" class="reminder-modal">
+        <div class="reminder-content">
+          <h1>⏰ Reminder</h1>
+          <p>You have un-pushed changes. Don’t forget to push!</p>
+          <button id="closeReminder">Got it</button>
+        </div>
+      </div>
+  </div>
+  <div id="panel-push" class="content" style="display:none;">
+    <h2>Push Data</h2>
+    <p>Export data from Excel.</p>
+  </div>
+
+  
+
+
+
+  <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+  <script src="taskpane.js" defer></script>
+</body>
+</html>

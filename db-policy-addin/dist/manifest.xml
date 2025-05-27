@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<OfficeApp 
+  xmlns="http://schemas.microsoft.com/office/appforoffice/1.1" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+  xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0" 
+  xmlns:ov="http://schemas.microsoft.com/office/taskpaneappversionoverrides" 
+  xsi:type="TaskPaneApp">
+
+  <!-- identity -->
+  <Id>b84236c4-6fd7-4f34-877a-5eada5ae2484</Id>
+  <Version>1.0.0.0</Version>
+  <ProviderName>Contoso</ProviderName>
+  <DefaultLocale>en-US</DefaultLocale>
+  <DisplayName DefaultValue="db-policy-addin"/>
+  <Description DefaultValue="Excel add-in for connecting to the policies database."/>
+
+  <!-- icons & domains -->
+  <IconUrl DefaultValue="https://brave-flower-0f0aafa1e-preview.westus2.6.azurestaticapps.net/addin/assets/icon-32.png"/>
+  <HighResolutionIconUrl DefaultValue="https://brave-flower-0f0aafa1e-preview.westus2.6.azurestaticapps.net/addin/assets/icon-64.png"/>
+  <AppDomains>
+    <AppDomain>https://brave-flower-0f0aafa1e-preview.westus2.6.azurestaticapps.net</AppDomain>
+  </AppDomains>
+
+  <!-- host and permissions -->
+  <Hosts>
+    <Host Name="Workbook"/>
+  </Hosts>
+  <Permissions>ReadWriteDocument</Permissions>
+
+  <!-- taskpane entrypoint -->
+  <DefaultSettings>
+    <SourceLocation DefaultValue="https://brave-flower-0f0aafa1e-preview.westus2.6.azurestaticapps.net/addin/taskpane.html"/>
+  </DefaultSettings>
+
+  <!-- ribbon button -->
+  <VersionOverrides xsi:type="VersionOverridesV1_0" xmlns="http://schemas.microsoft.com/office/taskpaneappversionoverrides">
+    <Hosts>
+      <Host xsi:type="Workbook">
+        <DesktopFormFactor>
+          <GetStarted>
+            <Title resid="GetStarted.Title"/>
+            <Description resid="GetStarted.Description"/>
+            <LearnMoreUrl resid="GetStarted.LearnMoreUrl"/>
+          </GetStarted>
+
+          <ExtensionPoint xsi:type="PrimaryCommandSurface">
+            <OfficeTab id="TabHome">
+              <Group id="CommandsGroup">
+                <Label resid="CommandsGroup.Label"/>
+                <Icon>
+                  <bt:Image size="16" resid="Icon.16x16"/>
+                  <bt:Image size="32" resid="Icon.32x32"/>
+                  <bt:Image size="80" resid="Icon.80x80"/>
+                </Icon>
+                <Control xsi:type="Button" id="TaskpaneButton">
+                  <Label resid="TaskpaneButton.Label"/>
+                  <Supertip>
+                    <Title resid="TaskpaneButton.Label"/>
+                    <Description resid="TaskpaneButton.Tooltip"/>
+                  </Supertip>
+                  <Icon>
+                    <bt:Image size="16" resid="Icon.16x16"/>
+                    <bt:Image size="32" resid="Icon.32x32"/>
+                    <bt:Image size="80" resid="Icon.80x80"/>
+                  </Icon>
+                  <Action xsi:type="ShowTaskpane">
+                    <TaskpaneId>ButtonId1</TaskpaneId>
+                    <SourceLocation resid="Taskpane.Url"/>
+                  </Action>
+                </Control>
+              </Group>
+            </OfficeTab>
+          </ExtensionPoint>
+        </DesktopFormFactor>
+      </Host>
+    </Hosts>
+
+    <Resources>
+      <bt:Images>
+        <bt:Image id="Icon.16x16" DefaultValue="https://brave-flower-0f0aafa1e-preview.westus2.6.azurestaticapps.net/addin/assets/icon-16.png"/>
+        <bt:Image id="Icon.32x32" DefaultValue="https://brave-flower-0f0aafa1e-preview.westus2.6.azurestaticapps.net/addin/assets/icon-32.png"/>
+        <bt:Image id="Icon.80x80" DefaultValue="https://brave-flower-0f0aafa1e-preview.westus2.6.azurestaticapps.net/addin/assets/icon-80.png"/>
+      </bt:Images>
+
+      <bt:Urls>
+        <bt:Url id="Taskpane.Url" DefaultValue="https://brave-flower-0f0aafa1e-preview.westus2.6.azurestaticapps.net/addin/taskpane.html"/>
+        <bt:Url id="Commands.Url"  DefaultValue="https://brave-flower-0f0aafa1e-preview.westus2.6.azurestaticapps.net/addin/commands.html"/>
+        <bt:Url id="GetStarted.LearnMoreUrl" DefaultValue="https://go.microsoft.com/fwlink/?LinkId=276812"/>
+      </bt:Urls>
+
+      <bt:ShortStrings>
+        <bt:String id="GetStarted.Title" DefaultValue="Welcome to your DB-Policy Add-in"/>
+        <bt:String id="CommandsGroup.Label" DefaultValue="DB-Policy"/>
+        <bt:String id="TaskpaneButton.Label" DefaultValue="Open Connector"/>
+      </bt:ShortStrings>
+
+      <bt:LongStrings>
+        <bt:String id="GetStarted.Description" DefaultValue="Click the button on the Home tab to open the Policies Database Connector."/>
+        <bt:String id="TaskpaneButton.Tooltip"   DefaultValue="Launch the connector task pane."/>
+      </bt:LongStrings>
+    </Resources>
+  </VersionOverrides>
+</OfficeApp>

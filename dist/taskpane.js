@@ -4003,7 +4003,7 @@ function scheduleReminder(intervalMs = 30 * 60 * 1000) {
   }, intervalMs);
 }
 function setupTabs() {
-  ['connect','pull','push'].forEach(tabKey => {
+  ['connect','pull','faq'].forEach(tabKey => {
     const tabEl   = document.getElementById(`tab-${tabKey}`);
     const panelEl = document.getElementById(`panel-${tabKey}`);
   
@@ -4012,7 +4012,7 @@ function setupTabs() {
       if (tabEl.classList.contains('disabled')) return;
   
       // switch active tab
-      ['connect','pull','push'].forEach(other => {
+      ['connect','pull','faq'].forEach(other => {
         document.getElementById(`tab-${other}`)
           .classList.toggle('active', other===tabKey);
         document.getElementById(`panel-${other}`)

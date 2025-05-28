@@ -296,7 +296,7 @@ body, button, input, summary {
 }
 #panel-pull .single-pull #docCodeInput {
   flex: 1;
-  max-width: 200px;
+  max-width: 100px;
 }
 /* Pull One button */
 #pullOneBtn {

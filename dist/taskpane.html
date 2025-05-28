@@ -17,17 +17,24 @@
   <div class="tabs">
     <div id="tab-connect" class="tab active">Login</div>
     <div id="tab-pull"    class="tab disabled">Connections</div>
-    <div id="tab-push"    class="tab disabled">Admin</div>
+    <div id="tab-faq"    class="tab">FAQ</div>
   </div>
   
   <div id="panel-connect" class="content" style="display:block;">
-    <form id="connectForm">
-      <label>User: <input name="user" required /></label><br/>
-      <label>Password: <input name="password" type="password" required /></label><br/>
-      <button type="submit">Connect</button>
+    <form id="connectForm" class="login-form">
+      <label>
+        User
+        <input name="user" required />
+      </label>
+      <label>
+        Password
+        <input name="password" type="password" required />
+      </label>
+      <button type="submit" id="connectBtn">Connect</button>
       <div id="connectStatus"></div>
     </form>
   </div>
+  
   
   <div id="panel-pull" class="content" style="display:none;">
     <h2>Pull Data</h2>
@@ -36,9 +43,9 @@
         <div id="tableCheckboxContainer"></div>
         <button id="pull" >Pull</button>
       </div>
-      <button id="push" >Push</button>
-      <div style="margin-top:1em;">
-        <label for="docCodeInput">Doc Code:</label>
+      <button id="push" >Push All</button>
+      <div class="single-pull">
+        <label for="docCodeInput">Document Code:</label>
         <input type="text" id="docCodeInput" placeholder="e.g. ABC123" />
         <button id="pullOneBtn">Pull One</button>
       </div>
@@ -59,13 +66,38 @@
         </div>
       </div>
   </div>
-  <div id="panel-push" class="content" style="display:none;">
-    <h2>Push Data</h2>
-    <p>Export data from Excel.</p>
+
+  <div id="panel-faq" class="content" style="display:none;">
+    <h2>FAQ and Usage</h2>
+    <div class="usage-instructions">
+      <h3>How to Use</h3>
+      <ol>
+        <li><strong>Login</strong>: Go to the <em>Login</em> tab, enter your credentials, then click <strong>Connect</strong>.</li>
+        <li><strong>Pull All Data</strong>: In the <em>Connections</em> tab, select one or more tables and click <strong>Pull</strong>. This will create a separate sheet for each table you pull, plus an additional sheet with country grouping info for your use. These sheets can interact directly with the database; <strong>do not put any equations within the highlighted tables</strong></li>
+        <li><strong>Pull One Record</strong>: Enter a <em>Doc Code</em> and click <strong>Pull One</strong> to import a single policy from the policies metadata.</li>
+        <li><strong>Push Data</strong>: After editing data in Excel, click <strong>Push</strong> to send ALL changes back to the database. <strong>This will push your changes from every sheet you modify</strong>. Please note that you will only be able to modify Country, Policy Date Year, Policy Name, Policy Type, or Last Modified columns from the policies table.</li>
+        <li><strong>Auto-Reminders</strong>: If you have un-pushed changes, a reminder modal appears every 30 minutes. If you do not click push, none of your edits will be saved to the database. It is best to frequently push so that the software can warn you of any conflicts or errors.</li>
+      </ol>
+    </div>
+    <div class="faq-item">
+      <details>
+        <summary>How do I connect to the database?</summary>
+        <p>Go to the Login tab, enter your username and password, then click Connect.</p>
+      </details>
+      <details>
+        <summary>How do I pull data?</summary>
+        <p>Switch to the Connections tab, select your desired tables, and click Pull. Use Pull One to pull the metadata for a single document code. A new sheet will be created for each table you pull.</p>
+      </details>
+      <details>
+        <summary>How do I save my data?</summary>
+        <p>When you click "push", all of your changes will be uploaded to the database. Then, next time you login an pull, your changes will be available. All changes can be edited at any point after a push, EXCEPT for the document code.</p>
+      </details>
+      <details>
+        <summary>Where can I find help?</summary>
+        <p>For more information on the policies database, contact miquel.munozcabre@sei.org. For technical problems using this tool, contact julia.weppler@sei.org.</p>
+      </details>
+    </div>
   </div>
-
-  
-
 
 
   <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>

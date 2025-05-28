@@ -4080,7 +4080,6 @@ async function connectToDb(evt) {
     document.getElementById("connectStatus").innerText = "✅ Connected!";
     isConnected = true;
     document.getElementById('tab-pull').classList.remove('disabled');
-    document.getElementById('tab-push').classList.remove('disabled');
 
   } catch (err) {
     document.getElementById("connectStatus").innerText = `❌ ${err.message}`;

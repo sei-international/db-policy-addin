@@ -4770,7 +4770,11 @@ async function pushToDb() {
             obj[dbCol] = cell;
           }
         });
-
+        if (tableName === "policies" && !obj.country && obj.doc_code) {
+                const iso3 = String(obj.doc_code).substring(0, 3).toUpperCase();
+                const grp  = COUNTRY_GROUPINGS.find(g => g.iso3c === iso3);
+                if (grp) obj.country = grp.Country;
+              }
         // *** strip inherited columns on non-policies sheets ***
         if (tableName !== "policies") {
           ["country","policy_year","policy_name","policy_format"].forEach(k => {

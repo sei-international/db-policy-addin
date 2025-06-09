@@ -4846,10 +4846,6 @@ function confirmPush(msg) {
 }
 
 
-
-
-
-// askConfirm helper stays the same
 function askConfirm(message) {
   return new Promise(resolve => {
     const dlg    = document.getElementById("confirmDialog");
@@ -4869,3 +4865,20 @@ function askConfirm(message) {
     noBtn .addEventListener("click", onNo);
   });
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+  const params = new URLSearchParams(window.location.search);
+  const tabParam = params.get('tab');
+
+  if (tabParam === 'faq') {
+    activateTab('tab-faq', 'panel-faq');
+  }
+
+  function activateTab(tabId, panelId) {
+    document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+    document.querySelectorAll('.content').forEach(panel => panel.style.display = 'none');
+
+    document.getElementById(tabId).classList.add('active');
+    document.getElementById(panelId).style.display = 'block';
+  }
+});

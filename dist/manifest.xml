@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<OfficeApp xmlns="http://schemas.microsoft.com/office/appforoffice/1.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0" xmlns:ov="http://schemas.microsoft.com/office/taskpaneappversionoverrides" xsi:type="TaskPaneApp">
+<OfficeApp
+    xmlns="http://schemas.microsoft.com/office/appforoffice/1.1"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0"
+    xsi:type="TaskPaneApp">
+
   <Id>b84236c4-6fd7-4f34-877a-5eada5ae2484</Id>
   <Version>1.0.0.0</Version>
   <ProviderName>SEI</ProviderName>
@@ -8,25 +13,35 @@
   <Description DefaultValue="Write your own Excel functions in JavaScript."/>
   <IconUrl DefaultValue="https://red-hill-01728051e.6.azurestaticapps.net/assets/icon-32.png"/>
   <HighResolutionIconUrl DefaultValue="https://red-hill-01728051e.6.azurestaticapps.net/assets/icon-64.png"/>
-  <SupportUrl DefaultValue="https://www.contoso.com/help"/>
+  <SupportUrl DefaultValue="https://red-hill-01728051e.6.azurestaticapps.net"/>
+
   <AppDomains>
-    <AppDomain>https://www.contoso.com</AppDomain>
+    <AppDomain>https://red-hill-01728051e.6.azurestaticapps.net</AppDomain>
   </AppDomains>
+
   <Hosts>
     <Host Name="Workbook"/>
   </Hosts>
+
   <Requirements>
     <Sets DefaultMinVersion="1.1">
       <Set Name="CustomFunctionsRuntime" MinVersion="1.1"/>
     </Sets>
   </Requirements>
+
   <DefaultSettings>
     <SourceLocation DefaultValue="https://red-hill-01728051e.6.azurestaticapps.net/taskpane.html"/>
   </DefaultSettings>
+
   <Permissions>ReadWriteDocument</Permissions>
-  <VersionOverrides xmlns="http://schemas.microsoft.com/office/taskpaneappversionoverrides" xsi:type="VersionOverridesV1_0">
+
+  <VersionOverrides
+      xmlns="http://schemas.microsoft.com/office/taskpaneappversionoverrides"
+      xsi:type="VersionOverridesV1_0">
+
     <Hosts>
       <Host xsi:type="Workbook">
+
         <AllFormFactors>
           <ExtensionPoint xsi:type="CustomFunctions">
             <Script>
@@ -41,13 +56,17 @@
             <Namespace resid="Functions.Namespace"/>
           </ExtensionPoint>
         </AllFormFactors>
+
+        <!-- ‣ DesktopFormFactor → Ribbon Command (PrimaryCommandSurface) -->
         <DesktopFormFactor>
           <GetStarted>
             <Title resid="GetStarted.Title"/>
             <Description resid="GetStarted.Description"/>
             <LearnMoreUrl resid="GetStarted.LearnMoreUrl"/>
           </GetStarted>
+
           <FunctionFile resid="Commands.Url"/>
+
           <ExtensionPoint xsi:type="PrimaryCommandSurface">
             <OfficeTab id="TabHome">
               <Group id="CommandsGroup">
@@ -77,32 +96,39 @@
             </OfficeTab>
           </ExtensionPoint>
         </DesktopFormFactor>
+
       </Host>
     </Hosts>
+
     <Resources>
       <bt:Images>
         <bt:Image id="Icon.16x16" DefaultValue="https://red-hill-01728051e.6.azurestaticapps.net/assets/icon-16.png"/>
         <bt:Image id="Icon.32x32" DefaultValue="https://red-hill-01728051e.6.azurestaticapps.net/assets/icon-32.png"/>
         <bt:Image id="Icon.80x80" DefaultValue="https://red-hill-01728051e.6.azurestaticapps.net/assets/icon-80.png"/>
       </bt:Images>
+
       <bt:Urls>
-        <bt:Url id="Functions.Script.Url" DefaultValue="https://red-hill-01728051e.6.azurestaticapps.net/public/functions.js"/>
-        <bt:Url id="Functions.Metadata.Url" DefaultValue="https://red-hill-01728051e.6.azurestaticapps.net/public/functions.json"/>
-        <bt:Url id="Functions.Page.Url" DefaultValue="https://red-hill-01728051e.6.azurestaticapps.net/public/functions.html"/>
-        <bt:Url id="GetStarted.LearnMoreUrl" DefaultValue="https://go.microsoft.com/fwlink/?LinkId=276812"/>
-        <bt:Url id="Commands.Url" DefaultValue="https://red-hill-01728051e.6.azurestaticapps.net/commands.html"/>
-        <bt:Url id="Taskpane.Url" DefaultValue="https://red-hill-01728051e.6.azurestaticapps.net/taskpane.html"/>
+        <bt:Url id="Functions.Script.Url"       DefaultValue="https://red-hill-01728051e.6.azurestaticapps.net/public/functions.js"/>
+        <bt:Url id="Functions.Metadata.Url"     DefaultValue="https://red-hill-01728051e.6.azurestaticapps.net/public/functions.json"/>
+        <bt:Url id="Functions.Page.Url"         DefaultValue="https://red-hill-01728051e.6.azurestaticapps.net/public/functions.html"/>
+        <bt:Url id="GetStarted.LearnMoreUrl"    DefaultValue="https://go.microsoft.com/fwlink/?LinkId=276812"/>
+        <bt:Url id="Commands.Url"               DefaultValue="https://red-hill-01728051e.6.azurestaticapps.net/commands.html"/>
+        <bt:Url id="Taskpane.Url"               DefaultValue="https://red-hill-01728051e.6.azurestaticapps.net/taskpane.html"/>
       </bt:Urls>
+
       <bt:ShortStrings>
-        <bt:String id="Functions.Namespace" DefaultValue="CONTOSO"/>
-        <bt:String id="GetStarted.Title" DefaultValue="Get started with your sample add-in!"/>
-        <bt:String id="CommandsGroup.Label" DefaultValue="Commands Group"/>
-        <bt:String id="TaskpaneButton.Label" DefaultValue="SEI Policy Database Add-in"/>
+        <bt:String id="Functions.Namespace"      DefaultValue="SEI Policies"/>
+        <bt:String id="GetStarted.Title"         DefaultValue="Get started with SEI Policy Database Add-in!"/>
+        <bt:String id="CommandsGroup.Label"      DefaultValue="Commands Group"/>
+        <bt:String id="TaskpaneButton.Label"     DefaultValue="SEI Policy Database Add-in"/>
       </bt:ShortStrings>
+
       <bt:LongStrings>
-        <bt:String id="GetStarted.Description" DefaultValue="Add-in loaded successfully. Go to the HOME tab and click the 'SEI Policy Database Add-in' button to get started."/>
-        <bt:String id="TaskpaneButton.Tooltip" DefaultValue="Click to Show SEI Policy Add-in"/>
+        <bt:String id="GetStarted.Description"   DefaultValue="Add-in loaded successfully. Go to the HOME tab and click the 'SEI Policy Database Add-in' button to get started."/>
+        <bt:String id="TaskpaneButton.Tooltip"   DefaultValue="Click to Show SEI Policy Add-in"/>
       </bt:LongStrings>
     </Resources>
+
   </VersionOverrides>
+
 </OfficeApp>

@@ -13,7 +13,7 @@
   <Description DefaultValue="Write your own Excel functions in JavaScript."/>
   <IconUrl DefaultValue="https://red-hill-01728051e.6.azurestaticapps.net/assets/icon-32.png"/>
   <HighResolutionIconUrl DefaultValue="https://red-hill-01728051e.6.azurestaticapps.net/assets/icon-64.png"/>
-  <SupportUrl DefaultValue="https://red-hill-01728051e.6.azurestaticapps.net"/>
+  <SupportUrl DefaultValue="https://red-hill-01728051e.6.azurestaticapps.net/taskpane.html?tab=faq"/>
 
   <AppDomains>
     <AppDomain>https://red-hill-01728051e.6.azurestaticapps.net</AppDomain>

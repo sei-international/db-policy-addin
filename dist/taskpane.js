@@ -4078,6 +4078,7 @@ async function connectToDb(evt) {
     const json = await res.json();
     if (!res.ok) throw new Error(json.error);
     document.getElementById("connectStatus").innerText = "✅ Connected!";
+    await populateTableCheckboxes(); 
     isConnected = true;
     document.getElementById('tab-pull').classList.remove('disabled');
 
@@ -4220,7 +4221,6 @@ Office.onReady(async info => {
     .addEventListener("submit", connectToDb);
   _initialized = true;
 
-  await populateTableCheckboxes();  // build your table list
   attachEventHandlers();            // wire up pull/push/closeReminder
   scheduleReminder();               // kick off your 30-min modal loop
   setupTabs();          // ← ADD THIS

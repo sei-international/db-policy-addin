@@ -4496,7 +4496,7 @@ async function pullFromDb() {
           });
 
         // autofit columns
-        sheet.getUsedRange().getEntireColumn().format.columnWidth = 20;
+        sheet.getUsedRange().getEntireColumn().format.columnWidth = 100;
         sheet.getUsedRange().getEntireRow().format.rowHeight = 18;
         await ctx.sync();
         
@@ -4665,7 +4665,7 @@ async function pullOneTable(tableName) {
       await ctx.sync();
     });
 
-    sheet.getUsedRange().getEntireColumn().format.columnWidth = 20;
+    sheet.getUsedRange().getEntireColumn().format.columnWidth = 100;
     sheet.getUsedRange().getEntireRow().format.rowHeight = 18;
     await ctx.sync();
 

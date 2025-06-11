@@ -4271,14 +4271,15 @@ Office.onReady(async info => {
   
 
 
-  const closeBtn = document.getElementById("closeReminder");
-  if (closeBtn) {
-    closeBtn.addEventListener("click", () => {
-      document
-        .getElementById("reminderModal")
-        .classList.remove("visible");
+  document.addEventListener('DOMContentLoaded', () => {
+      const closeBtn = document.getElementById("closeReminder");
+      if (closeBtn) {
+        closeBtn.addEventListener("click", () => {
+          document.getElementById("reminderModal")?.classList.remove("visible");
+        });
+      }
     });
-  }
+    
 });
 
 

@@ -44,11 +44,11 @@
         <button id="pull" >Pull</button>
       </div>
       <button id="push" >Push All</button>
-      <div class="single-pull">
+      <!-- <div class="single-pull">
         <label for="docCodeInput">Document Code:</label>
         <input type="text" id="docCodeInput" placeholder="e.g. ABC123" />
         <button id="pullOneBtn">Pull One</button>
-      </div>
+      </div> -->
       <div id="status">Ready</div>
       <div id="confirmDialog" class="confirm-modal">
         <div class="confirm-content">
@@ -74,7 +74,6 @@
       <ol>
         <li><strong>Login</strong>: Go to the <em>Login</em> tab, enter your credentials, then click <strong>Connect</strong>.</li>
         <li><strong>Pull All Data</strong>: In the <em>Connections</em> tab, select one or more tables and click <strong>Pull</strong>. This will create a separate sheet for each table you pull, plus an additional sheet with country grouping info for your use. These sheets can interact directly with the database; <strong>do not put any equations within the highlighted tables</strong></li>
-        <li><strong>Pull One Record</strong>: Enter a <em>Doc Code</em> and click <strong>Pull One</strong> to import a single policy from the policies metadata.</li>
         <li><strong>Push Data</strong>: After editing data in Excel, click <strong>Push</strong> to send ALL changes back to the database. <strong>This will push your changes from every sheet you modify</strong>. Please note that you will only be able to modify Country, Policy Date Year, Policy Name, Policy Type, or Last Modified columns from the policies table.</li>
         <li><strong>Auto-Reminders</strong>: If you have un-pushed changes, a reminder modal appears every 30 minutes. If you do not click push, none of your edits will be saved to the database. It is best to frequently push so that the software can warn you of any conflicts or errors.</li>
       </ol>

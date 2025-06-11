@@ -375,8 +375,8 @@ body, button, input, summary {
 .tooltip-container .tooltip-text {
   visibility: hidden;
   width: 180px;
-  background-color: rgb(146, 146, 146);
-  color: #292929;
+  background-color: rgb(217, 217, 217);
+  color: #252525;
   text-align: center;
   padding: 4px 8px;
   border-radius: 10px;
@@ -392,5 +392,5 @@ body, button, input, summary {
 }
 .tooltip-container:hover .tooltip-text {
   visibility: visible;
-  opacity: 0.8;
+  opacity: 0.95;
 }

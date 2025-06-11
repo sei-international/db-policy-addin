@@ -372,24 +372,24 @@ body, button, input, summary {
   position: relative;
   display: inline-block;
 }
-
 .tooltip-container .tooltip-text {
   visibility: hidden;
-  background-color: rgba(200, 200, 200, 0.9);  /* light gray, translucent */
-  color: black;                                /* smaller black text */
-  font-size: 12px;
-  padding: 6px 10px;
-  border-radius: 8px;                          /* more rounded */
+  width: 180px;
+  background-color: rgb(146, 146, 146);
+  color: #292929;
+  text-align: center;
+  padding: 4px 8px;
+  border-radius: 10px;
   position: absolute;
   z-index: 100;
   bottom: 125%;
   left: 50%;
   transform: translateX(-50%);
   opacity: 0;
-  white-space: nowrap;
+}
+.tooltip-container {
   transition: opacity 0.3s;
 }
-
 .tooltip-container:hover .tooltip-text {
   visibility: visible;
   opacity: 0.8;

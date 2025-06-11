@@ -16,7 +16,7 @@
 
   <div class="tabs">
     <div id="tab-connect" class="tab active">Login</div>
-    <div id="tab-pull"    class="tab disabled">Connections</div>
+    <div id="tab-pull"    class="tab disabled">Database</div>
     <div id="tab-faq"    class="tab">FAQ</div>
   </div>
   
@@ -41,9 +41,9 @@
     <p>Select which sheets you would like to pull data from</p>
     <div class="controls">
         <div id="tableCheckboxContainer"></div>
-        <button id="pull" >Pull</button>
+        <button id="pull" title="Pull data from the database into this workbook. This will not have any affect on the content of the database.">Pull</button>
       </div>
-      <button id="push" >Push All Changes</button>
+      <button id="push" title="Push your edits into the database. This will push ALL changes from EVERY worksheet you've modified that is connected to a database table. Please be sure to double check your changes before pushing. You can revisit and edit any fields after pushing.">Push All Changes</button>
       <!-- <div class="single-pull">
         <label for="docCodeInput">Document Code:</label>
         <input type="text" id="docCodeInput" placeholder="e.g. ABC123" />
@@ -73,7 +73,7 @@
       <h3>How to Use</h3>
       <ol>
         <li><strong>Login</strong>: Go to the <em>Login</em> tab, enter your credentials, then click <strong>Connect</strong>.</li>
-        <li><strong>Pull All Data</strong>: In the <em>Connections</em> tab, select one or more tables and click <strong>Pull</strong>. This will create a separate sheet for each table you pull, plus an additional sheet with country grouping info for your use. These sheets can interact directly with the database; <strong>do not put any equations within the highlighted tables</strong></li>
+        <li><strong>Pull All Data</strong>: In the <em>Database</em> tab, select one or more tables and click <strong>Pull</strong>. This will create a separate sheet for each table you pull, plus an additional sheet with country grouping info for your use. These sheets can interact directly with the database; <strong>do not put any equations within the highlighted tables</strong></li>
         <li><strong>Push Data</strong>: After editing data in Excel, click <strong>Push</strong> to send ALL changes back to the database. <strong>This will push your changes from every sheet you modify</strong>. Please note that you will only be able to modify Country, Policy Date Year, Policy Name, Policy Type, or Last Modified columns from the policies table.</li>
         <li><strong>Auto-Reminders</strong>: If you have un-pushed changes, a reminder modal appears every 30 minutes. If you do not click push, none of your edits will be saved to the database. It is best to frequently push so that the software can warn you of any conflicts or errors.</li>
       </ol>
@@ -85,7 +85,7 @@
       </details>
       <details>
         <summary>How do I pull data?</summary>
-        <p>Switch to the Connections tab, select your desired tables, and click Pull. Use Pull One to pull the metadata for a single document code. A new sheet will be created for each table you pull.</p>
+        <p>Switch to the Database tab, select your desired tables, and click Pull. Use Pull One to pull the metadata for a single document code. A new sheet will be created for each table you pull.</p>
       </details>
       <details>
         <summary>How do I save my data?</summary>

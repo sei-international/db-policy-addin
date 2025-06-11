@@ -375,6 +375,7 @@ body, button, input, summary {
 .tooltip-container .tooltip-text {
   visibility: hidden;
   width: 180px;
+  font-size: 12px;
   background-color: rgb(217, 217, 217);
   color: #252525;
   text-align: center;

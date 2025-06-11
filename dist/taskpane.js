@@ -4496,7 +4496,8 @@ async function pullFromDb() {
           });
 
         // autofit columns
-        sheet.getUsedRange().getEntireColumn().format.autofitColumns();
+        sheet.getUsedRange().getEntireColumn().format.columnWidth = 20;
+        sheet.getUsedRange().getEntireRow().format.rowHeight = 18
         await ctx.sync();
         
         // update hidden cache

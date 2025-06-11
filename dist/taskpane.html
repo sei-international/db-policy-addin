@@ -41,14 +41,15 @@
     <p>Select which sheets you would like to pull data from</p>
     <div class="controls">
         <div id="tableCheckboxContainer"></div>
-        <button id="pull" title="Pull data from the database into this workbook. This will not have any affect on the content of the database.">Pull</button>
+        <div class="tooltip-container">
+        <button id="pull">Pull</button>
+        <span class="tooltip-text">Pull data from the database into this workbook. This will not have any affect on the content of the database.</span>
       </div>
-      <button id="push" title="Push your edits into the database. This will push ALL changes from EVERY worksheet you've modified that is connected to a database table. Please be sure to double check your changes before pushing. You can revisit and edit any fields after pushing.">Push All Changes</button>
-      <!-- <div class="single-pull">
-        <label for="docCodeInput">Document Code:</label>
-        <input type="text" id="docCodeInput" placeholder="e.g. ABC123" />
-        <button id="pullOneBtn">Pull One</button>
-      </div> -->
+      </div>
+      <div class="tooltip-container">
+        <button id="push" >Push All Changes</button>
+        <span class="tooltip-text">Push your edits into the database. This will push ALL changes from EVERY worksheet you've modified that is connected to a database table. Please be sure to double check your changes before pushing. You can revisit and edit any fields after pushing.</span>
+      </div>
       <div id="status"></div>
       <div id="confirmDialog" class="confirm-modal">
         <div class="confirm-content">

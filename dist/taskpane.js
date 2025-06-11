@@ -4242,7 +4242,7 @@ Office.onReady(async info => {
         )
       ).map(cb => cb.value);
       if (!checked.length) {
-        statusEl.innerText = "Select at least one sheet to pull into.";
+        statusEl.innerText = "Select at least one sheet to pull.";
         return;
       }
 
@@ -4251,11 +4251,11 @@ Office.onReady(async info => {
       try {
         policy = await fetchPolicyRecord(code);
       } catch (err) {
-        statusEl.innerText = `❌ API error: ${err.message}`;
+        statusEl.innerText = `There has been an error connecting with the database. Make sure you are logged in, or refresh and try again. If the issue persists, contact julia.weppler@sei.org. Error message: ${err.message}`;
         return;
       }
       if (!policy) {
-        statusEl.innerText = `❌ No policy found for "${code}".`;
+        statusEl.innerText = `❌ No policy found for document code "${code}". The document must exist in policies before it can be referenced in other sheets. Push this document code in the policies sheet before attempting to reference in additional sheets.`;
         return;
       }
 
@@ -4265,7 +4265,7 @@ Office.onReady(async info => {
         statusEl.innerText = `✅ Done.`;
       } catch (err) {
         console.error(err);
-        statusEl.innerText = `❌ ${err.message}`;
+        statusEl.innerText = `❌ Something unexpected has occured. Refresh and try again. If the error persists, contact julia.weppler@sei.org. Error message: ${err.message}`;
       }
     });
   
@@ -4319,7 +4319,7 @@ async function populateTableCheckboxes() {
   } catch (e) {
     console.error("Failed to load tables:", e);
     document.getElementById("status").innerText =
-      `Error loading tables: ${e.message}`;
+      `There was an error pulling the following sheets from the database: ${e.message}. Try pulling the sheets one at a time, or refresh this pane. If the error persists, contact julia.weppler@sei.org.`;
   }
 }
 async function fetchDbRows(tableName) {

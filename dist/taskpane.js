@@ -4500,7 +4500,7 @@ async function pullFromDb() {
           });
 
         // autofit columns
-        sheet.getUsedRange().getEntireColumn().format.columnWidth = 100;
+        sheet.getUsedRange().getEntireColumn().format.columnWidth = 130;
         sheet.getUsedRange().getEntireRow().format.rowHeight = 18;
         await ctx.sync();
         
@@ -4669,7 +4669,7 @@ async function pullOneTable(tableName) {
       await ctx.sync();
     });
 
-    sheet.getUsedRange().getEntireColumn().format.columnWidth = 100;
+    sheet.getUsedRange().getEntireColumn().format.columnWidth = 130;
     sheet.getUsedRange().getEntireRow().format.rowHeight = 18;
     await ctx.sync();
 
@@ -4797,7 +4797,6 @@ async function pushToDb() {
         // diff against cache (ignore date_entry)
         const orig = cacheMap.get(obj.doc_code);
         const isChanged = !orig || Object.keys(obj).some(k =>
-          k !== "date_entry" &&
           String(orig[k] ?? "") !== String(obj[k] ?? "")
         );
         if (isChanged) {

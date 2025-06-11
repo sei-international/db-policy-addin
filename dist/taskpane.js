@@ -4300,7 +4300,11 @@ async function populateTableCheckboxes() {
   try {
     const res    = await fetch(`${apiBase}/tables`);
     const tables = await res.json();               // e.g. ["policies", "social_acceptance", …]
-    const unique = [...new Set(tables)];
+    const unique = [...new Set(tables)].sort((a, b) => {
+      if (a === "policies") return -1;
+      if (b === "policies") return 1;
+      return a.localeCompare(b);
+    });
 
     unique.forEach(t => {
       const id     = `chk_${t}`;

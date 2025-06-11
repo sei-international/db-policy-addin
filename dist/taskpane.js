@@ -4225,49 +4225,49 @@ Office.onReady(async info => {
   scheduleReminder();               // kick off your 30-min modal loop
   setupTabs();          // ← ADD THIS
   // 1) Update your click‐handler wiring:
-  document.getElementById("pullOneBtn")
-    .addEventListener("click", async () => {
-      const code = document
-        .getElementById("docCodeInput")
-        .value
-        .trim();
-      if (!code) {
-        statusEl.innerText = "Please enter a doc_code.";
-        return;
-      }
+  // document.getElementById("pullOneBtn")
+  //   .addEventListener("click", async () => {
+  //     const code = document
+  //       .getElementById("docCodeInput")
+  //       .value
+  //       .trim();
+  //     if (!code) {
+  //       statusEl.innerText = "Please enter a doc_code.";
+  //       return;
+  //     }
 
-      const checked = Array.from(
-        document.querySelectorAll(
-          "#tableCheckboxContainer input[type=checkbox]:checked"
-        )
-      ).map(cb => cb.value);
-      if (!checked.length) {
-        statusEl.innerText = "Select at least one sheet to pull.";
-        return;
-      }
+  //     const checked = Array.from(
+  //       document.querySelectorAll(
+  //         "#tableCheckboxContainer input[type=checkbox]:checked"
+  //       )
+  //     ).map(cb => cb.value);
+  //     if (!checked.length) {
+  //       statusEl.innerText = "Select at least one sheet to pull.";
+  //       return;
+  //     }
 
-      statusEl.innerText = `Fetching policy "${code}"…`;
-      let policy;
-      try {
-        policy = await fetchPolicyRecord(code);
-      } catch (err) {
-        statusEl.innerText = `There has been an error connecting with the database. Make sure you are logged in, or refresh and try again. If the issue persists, contact julia.weppler@sei.org. Error message: ${err.message}`;
-        return;
-      }
-      if (!policy) {
-        statusEl.innerText = `❌ No policy found for document code "${code}". The document must exist in policies before it can be referenced in other sheets. Push this document code in the policies sheet before attempting to reference in additional sheets.`;
-        return;
-      }
+  //     statusEl.innerText = `Fetching policy "${code}"…`;
+  //     let policy;
+  //     try {
+  //       policy = await fetchPolicyRecord(code);
+  //     } catch (err) {
+  //       statusEl.innerText = `There has been an error connecting with the database. Make sure you are logged in, or refresh and try again. If the issue persists, contact julia.weppler@sei.org. Error message: ${err.message}`;
+  //       return;
+  //     }
+  //     if (!policy) {
+  //       statusEl.innerText = `❌ No policy found for document code "${code}". The document must exist in policies before it can be referenced in other sheets. Push this document code in the policies sheet before attempting to reference in additional sheets.`;
+  //       return;
+  //     }
 
-      statusEl.innerText = `Pulling "${code}" into ${checked.join(", ")}…`;
-      try {
-        await pullDocCodeIntoTables(checked, code, policy);
-        statusEl.innerText = `✅ Done.`;
-      } catch (err) {
-        console.error(err);
-        statusEl.innerText = `❌ Something unexpected has occured. Refresh and try again. If the error persists, contact julia.weppler@sei.org. Error message: ${err.message}`;
-      }
-    });
+  //     statusEl.innerText = `Pulling "${code}" into ${checked.join(", ")}…`;
+  //     try {
+  //       await pullDocCodeIntoTables(checked, code, policy);
+  //       statusEl.innerText = `✅ Done.`;
+  //     } catch (err) {
+  //       console.error(err);
+  //       statusEl.innerText = `❌ Something unexpected has occured. Refresh and try again. If the error persists, contact julia.weppler@sei.org. Error message: ${err.message}`;
+  //     }
+  //   });
   
 
 

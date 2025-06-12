@@ -8833,16 +8833,11 @@ const msalConfig = {
   auth: {
     clientId: `8cc00aa3-da33-417f-809c-d88ff659e241`,
     authority: `https://login.microsoftonline.com/7ae70e88-6ecf-4c7d-87b5-68251dcf3384`,
-    supportsNestedAppAuth: true
   }
 };
 
 const msalInstance = new msal.PublicClientApplication(msalConfig);
-let pca;
 
-async function initializeAuth() {
-  pca = await createNestablePublicClientApplication(msalConfig);
-}
 
 async function getToken() {
   const accounts = msalInstance.getAllAccounts();
@@ -9103,7 +9098,6 @@ Office.onReady(async info => {
   if (!Office.context.requirements.isSetSupported("NestedAppAuth", "1.1")) {
     console.warn("Running without NAA support—only interactive login via popup will work.");
   }
-  await initializeAuth();
   OfficeRuntime.auth.getAccessToken({ allowConsentPrompt: true }).catch(() => {});
 
   attachEventHandlers();            // wire up pull/push/closeReminder

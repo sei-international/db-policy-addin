@@ -9107,18 +9107,10 @@ Office.onReady(async info => {
   attachEventHandlers();            // wire up pull/push/closeReminder
   scheduleReminder();               // kick off your 30-min modal loop
   setupTabs();          // ← ADD THIS
-  
-  
-
-
-  document.addEventListener('DOMContentLoaded', () => {
-      const closeBtn = document.getElementById("closeReminder");
-      if (closeBtn) {
-        closeBtn.addEventListener("click", () => {
-          document.getElementById("reminderModal")?.classList.remove("visible");
-        });
-      }
-    });
+  const closeBtn = document.getElementById("closeReminder");
+  if (closeBtn) {
+    closeBtn.addEventListener("click", hideReminderModal);
+  }
     
 });
 

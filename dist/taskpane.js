@@ -8827,39 +8827,37 @@ const COLUMN_MAP = {
 
 
 };
-import {
-  createNestablePublicClientApplication,
-  InteractionRequiredAuthError
-} from "@azure/msal-browser";
 
 // --- Azure AD config & NAA setup ---
 const msalConfig = {
   auth: {
-    clientId: "<EXCEL_CLIENT_APP_ID>",
-    authority: "https://login.microsoftonline.com/<YOUR_TENANT_ID>",
-    // Required for NAA
+    clientId: import.meta.env.VITE_EXCEL_APP_ID,
+    authority: `https://login.microsoftonline.com/${import.meta.env.VITE_TENANT_ID}`,
     supportsNestedAppAuth: true
   }
 };
+
+const msalInstance = new msal.PublicClientApplication(msalConfig);
 let pca;
 
 async function initializeAuth() {
   pca = await createNestablePublicClientApplication(msalConfig);
 }
+
 async function getToken() {
-  const request = {
-    scopes: ["api://<API_CLIENT_APP_ID>/access_as_user"],
-    account: pca.getActiveAccount() ?? pca.getAllAccounts()[0]
+  const accounts = msalInstance.getAllAccounts();
+  const account = accounts[0];
+  const req = {
+    scopes: [`api://${import.meta.env.VITE_API_CLIENT_ID}/access_as_user`],
+    account
   };
+
   try {
-    const result = await pca.acquireTokenSilent(request);
-    return result.accessToken;
-  } catch (err) {
-    if (err instanceof InteractionRequiredAuthError) {
-      const result = await pca.acquireTokenPopup(request);
-      return result.accessToken;
-    }
-    throw err;
+    const res = await msalInstance.acquireTokenSilent(req);
+    return res.accessToken;
+  } catch (e) {
+    const res = await msalInstance.acquireTokenPopup(req);
+    return res.accessToken;
   }
 }
 // Excel header → db column

@@ -8937,13 +8937,16 @@ async function pullCountryGroupings() {
   });
 }
 async function authFetch(url, opts = {}) {
-  const token = await getToken();
+  const token = await getToken().catch(err => {
+    console.error("❌ Failed to get token:", err);
+    throw err;
+  });
+  console.log("✅ Token:", token);
   opts.headers = {
     ...opts.headers,
     Authorization: `Bearer ${token}`,
     "Content-Type": "application/json"
   };
-  console.log("Token:", token);
   return fetch(url, opts);
 }
 document.getElementById("connectForm").addEventListener("submit", async (evt) => {

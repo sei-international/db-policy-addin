@@ -9167,7 +9167,7 @@ async function populateTableCheckboxes() {
 }
 
 async function fetchDbRows(tableName) {
-
+  const token = await getToken();
   // 1) get column list
   const colsRes = await fetch(
     `${apiBase}/columns?table=${encodeURIComponent(tableName)}`,
@@ -9182,7 +9182,6 @@ async function fetchDbRows(tableName) {
   const dbCols = await colsRes.json();
 
   // 2) get data rows
-  const token = await getToken();
   const dataRes = await fetch(
     `${apiBase}/pull?table=${encodeURIComponent(tableName)}`,
     {

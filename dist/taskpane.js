@@ -8943,6 +8943,7 @@ async function authFetch(url, opts = {}) {
     Authorization: `Bearer ${token}`,
     "Content-Type": "application/json"
   };
+  console.log("Token:", token);
   return fetch(url, opts);
 }
 document.getElementById("connectForm").addEventListener("submit", async (evt) => {
@@ -9132,6 +9133,10 @@ async function populateTableCheckboxes() {
 
   try {
     const res = await authFetch(`${apiBase}/tables`, { method: "GET" });
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`API error ${res.status}: ${text}`);
+    }
     const tables = await res.json(); // e.g. ["policies", "social_acceptance", …]
 
     const unique = [...new Set(tables)].sort((a, b) => {

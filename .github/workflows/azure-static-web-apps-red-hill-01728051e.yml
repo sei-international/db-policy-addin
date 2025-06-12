@@ -11,10 +11,7 @@ on:
 
 jobs:
   build_and_deploy_job:
-    env:
-          VITE_EXCEL_CLIENT_APP_ID: ${{ secrets.EXCEL_APP_ID }}
-          VITE_TENANT_ID: ${{ secrets.TENANT_ID }}
-          VITE_API_CLIENT_APP_ID: ${{ secrets.API_APP_ID }}
+    
     if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
     runs-on: ubuntu-latest
     name: Build and Deploy Job

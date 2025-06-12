@@ -8947,6 +8947,7 @@ async function authFetch(url, opts = {}) {
     Authorization: `Bearer ${token}`,
     "Content-Type": "application/json"
   };
+  opts.credentials = "include";
   return fetch(url, opts);
 }
 document.getElementById("connectForm").addEventListener("submit", async (evt) => {

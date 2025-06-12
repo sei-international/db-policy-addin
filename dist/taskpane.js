@@ -8831,8 +8831,8 @@ const COLUMN_MAP = {
 // --- Azure AD config & NAA setup ---
 const msalConfig = {
   auth: {
-    clientId: import.meta.env.VITE_EXCEL_APP_ID,
-    authority: `https://login.microsoftonline.com/${import.meta.env.VITE_TENANT_ID}`,
+    clientId: `8cc00aa3-da33-417f-809c-d88ff659e241`,
+    authority: `https://login.microsoftonline.com/7ae70e88-6ecf-4c7d-87b5-68251dcf3384`,
     supportsNestedAppAuth: true
   }
 };
@@ -8848,7 +8848,7 @@ async function getToken() {
   const accounts = msalInstance.getAllAccounts();
   const account = accounts[0];
   const req = {
-    scopes: [`api://${import.meta.env.VITE_API_CLIENT_ID}/access_as_user`],
+    scopes: [`api://1e80567b-ae09-49e6-89ab-9c6864281060/access_as_user`],
     account
   };
 

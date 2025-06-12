@@ -8831,7 +8831,7 @@ const COLUMN_MAP = {
 // --- Azure AD config & NAA setup ---
 const msalConfig = {
   auth: {
-    clientId: `8cc00aa3-da33-417f-809c-d88ff659e241`,
+    clientId: `6bdb1e9e-0a32-4896-9fca-79b7b1fa5480`,
     authority: `https://login.microsoftonline.com/7ae70e88-6ecf-4c7d-87b5-68251dcf3384`,
   }
 };
@@ -9093,7 +9093,6 @@ async function pullOnePolicy(tableName, code) {
 
 // start it up in Office.onReady:
 Office.onReady(async info => {
-  if (info.host !== Office.HostType.Excel) return;
   if (info.host !== Office.HostType.Excel) return;
   if (!Office.context.requirements.isSetSupported("NestedAppAuth", "1.1")) {
     console.warn("Running without NAA support—only interactive login via popup will work.");

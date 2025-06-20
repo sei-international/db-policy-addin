@@ -3982,21 +3982,24 @@ const COLUMN_MAP = {
 
 const msalConfig = {
   auth: {
-    clientId: `2aa8453b-2c60-4d91-baeb-8a920b648453`,
-    authority: `https://login.microsoftonline.com/3dfe125d-a589-44af-9fc7-113f3bff5873`,
+    clientId: "99b30329-bfd7-4066-a351-503f6b025619",
+    authority: "https://login.microsoftonline.com/3dfe125d-a589-44af-9fc7-113f3bff5873",
     redirectUri: "https://green-tree-051651103.2.azurestaticapps.net/taskpane.html",
-    // this one is only for popup flows:
-    popupRedirectUri: "https://green-tree-051651103.2.azurestaticapps.net/auth-redirect.html"
+    popupRedirectUri: "https://green-tree-051651103.2.azurestaticapps.net/auth-redirect.html",
+    navigateToLoginRequestUrl: false
   },
   cache: {
     cacheLocation: "sessionStorage",
-    storeAuthStateInCookie: true
-  },
-  system: {
-    navigateToLoginRequestUrl: false
+    storeAuthStateInCookie: false
   }
 };
 const msalInstance = new msal.PublicClientApplication(msalConfig);
+window.addEventListener("message", evt => {
+  if (evt.origin === window.location.origin && evt.data.authResponse) {
+    // let MSAL know which account just logged in
+    msalInstance.setActiveAccount(evt.data.authResponse.account);
+  }
+});
 
 
 async function getToken() {

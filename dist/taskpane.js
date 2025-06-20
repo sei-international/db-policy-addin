@@ -8698,7 +8698,7 @@ const dropdowns = {
   ]
 };
 // global base URL for your API
-const apiBase = "https://policydatabaseseitest-fthcc9h2dbdtagh5.canadacentral-01.azurewebsites.net/api";
+const apiBase = "https://dbpolicyaddin-d0d4fdehc5h8cpdh.northeurope-01.azurewebsites.net/api";
 
 // reuse your existing status element for messages
 const statusEl = document.getElementById("status");
@@ -8831,8 +8831,8 @@ const COLUMN_MAP = {
 // --- Azure AD config & NAA setup ---
 const msalConfig = {
   auth: {
-    clientId: `6bdb1e9e-0a32-4896-9fca-79b7b1fa5480`,
-    authority: `https://login.microsoftonline.com/7ae70e88-6ecf-4c7d-87b5-68251dcf3384`,
+    clientId: `2aa8453b-2c60-4d91-baeb-8a920b648453`,
+    authority: `https://login.microsoftonline.com/3dfe125d-a589-44af-9fc7-113f3bff5873`,
   }
 };
 
@@ -8843,7 +8843,7 @@ async function getToken() {
   const accounts = msalInstance.getAllAccounts();
   const account = accounts[0];
   const req = {
-    scopes: [`api://1e80567b-ae09-49e6-89ab-9c6864281060/access_as_user`],
+    scopes: [`api://99b30329-bfd7-4066-a351-503f6b025619/access_as_user`],
     account
   };
 

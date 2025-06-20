@@ -11,12 +11,12 @@
   <DefaultLocale>en-US</DefaultLocale>
   <DisplayName DefaultValue="db-policy-addin"/>
   <Description DefaultValue="Write your own Excel functions in JavaScript."/>
-  <IconUrl DefaultValue="https://red-hill-01728051e.6.azurestaticapps.net/assets/icon-32.png"/>
-  <HighResolutionIconUrl DefaultValue="https://red-hill-01728051e.6.azurestaticapps.net/assets/icon-64.png"/>
-  <SupportUrl DefaultValue="https://red-hill-01728051e.6.azurestaticapps.net/taskpane.html?tab=faq"/>
+  <IconUrl DefaultValue="https://green-tree-051651103.2.azurestaticapps.net/assets/icon-32.png"/>
+  <HighResolutionIconUrl DefaultValue="https://green-tree-051651103.2.azurestaticapps.net/assets/icon-64.png"/>
+  <SupportUrl DefaultValue="https://green-tree-051651103.2.azurestaticapps.net/taskpane.html?tab=faq"/>
 
   <AppDomains>
-    <AppDomain>https://red-hill-01728051e.6.azurestaticapps.net</AppDomain>
+    <AppDomain>https://green-tree-051651103.2.azurestaticapps.net</AppDomain>
   </AppDomains>
 
   <Hosts>
@@ -30,7 +30,7 @@
   </Requirements>
 
   <DefaultSettings>
-    <SourceLocation DefaultValue="https://red-hill-01728051e.6.azurestaticapps.net/taskpane.html"/>
+    <SourceLocation DefaultValue="https://green-tree-051651103.2.azurestaticapps.net/taskpane.html"/>
   </DefaultSettings>
 
   <Permissions>ReadWriteDocument</Permissions>
@@ -102,18 +102,18 @@
 
     <Resources>
       <bt:Images>
-        <bt:Image id="Icon.16x16" DefaultValue="https://red-hill-01728051e.6.azurestaticapps.net/assets/icon-16.png"/>
-        <bt:Image id="Icon.32x32" DefaultValue="https://red-hill-01728051e.6.azurestaticapps.net/assets/icon-32.png"/>
-        <bt:Image id="Icon.80x80" DefaultValue="https://red-hill-01728051e.6.azurestaticapps.net/assets/icon-80.png"/>
+        <bt:Image id="Icon.16x16" DefaultValue="https://green-tree-051651103.2.azurestaticapps.net/assets/icon-16.png"/>
+        <bt:Image id="Icon.32x32" DefaultValue="https://green-tree-051651103.2.azurestaticapps.net/assets/icon-32.png"/>
+        <bt:Image id="Icon.80x80" DefaultValue="https://green-tree-051651103.2.azurestaticapps.net/assets/icon-80.png"/>
       </bt:Images>
 
       <bt:Urls>
-        <bt:Url id="Functions.Script.Url"       DefaultValue="https://red-hill-01728051e.6.azurestaticapps.net/public/functions.js"/>
-        <bt:Url id="Functions.Metadata.Url"     DefaultValue="https://red-hill-01728051e.6.azurestaticapps.net/public/functions.json"/>
-        <bt:Url id="Functions.Page.Url"         DefaultValue="https://red-hill-01728051e.6.azurestaticapps.net/public/functions.html"/>
+        <bt:Url id="Functions.Script.Url"       DefaultValue="https://green-tree-051651103.2.azurestaticapps.net/public/functions.js"/>
+        <bt:Url id="Functions.Metadata.Url"     DefaultValue="https://green-tree-051651103.2.azurestaticapps.net/public/functions.json"/>
+        <bt:Url id="Functions.Page.Url"         DefaultValue="https://green-tree-051651103.2.azurestaticapps.net/public/functions.html"/>
         <bt:Url id="GetStarted.LearnMoreUrl"    DefaultValue="https://go.microsoft.com/fwlink/?LinkId=276812"/>
-        <bt:Url id="Commands.Url"               DefaultValue="https://red-hill-01728051e.6.azurestaticapps.net/commands.html"/>
-        <bt:Url id="Taskpane.Url"               DefaultValue="https://red-hill-01728051e.6.azurestaticapps.net/taskpane.html"/>
+        <bt:Url id="Commands.Url"               DefaultValue="https://green-tree-051651103.2.azurestaticapps.net/commands.html"/>
+        <bt:Url id="Taskpane.Url"               DefaultValue="https://green-tree-051651103.2.azurestaticapps.net/taskpane.html"/>
       </bt:Urls>
 
       <bt:ShortStrings>

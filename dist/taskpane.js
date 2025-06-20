@@ -4008,11 +4008,13 @@ async function getToken() {
   };
 
   try {
-    const res = await msalInstance.acquireTokenSilent(req);
-    return res.accessToken;
-  } catch (e) {
-    const res = await msalInstance.acquireTokenPopup(req);
-    return res.accessToken;
+    const silent = await msalInstance.acquireTokenSilent(req);
+    return silent.accessToken;
+  } catch {
+    // MSAL will open a popup that loads your auth-redirect.html, 
+    // handles the token, and auto-closes.
+    const popupRes = await msalInstance.acquireTokenPopup(req);
+    return popupRes.accessToken;
   }
 }
 // Excel header → db column

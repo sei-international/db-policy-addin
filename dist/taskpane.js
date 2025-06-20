@@ -8833,6 +8833,8 @@ const msalConfig = {
   auth: {
     clientId: `2aa8453b-2c60-4d91-baeb-8a920b648453`,
     authority: `https://login.microsoftonline.com/3dfe125d-a589-44af-9fc7-113f3bff5873`,
+    redirectUri: "https://green-tree-051651103.2.azurestaticapps.net/taskpane.html",
+    postLogoutRedirectUri: "https://green-tree-051651103.2.azurestaticapps.net/taskpane.html"
   }
 };
 

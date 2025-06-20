@@ -1,0 +1,31 @@
+<!-- auth-redirect.html -->
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="https://alcdn.msauth.net/browser/2.28.1/js/msal-browser.min.js"></script>
+  <script>
+    // Make sure this matches your msalInstance
+    const msalConfig = {  
+      auth: {
+        clientId: "<YOUR-SPA-CLIENT-ID>",
+        authority: "https://login.microsoftonline.com/<YOUR-TENANT-ID>",
+        navigateToLoginRequestUrl: false
+      }
+    };
+    const msalInstance = new msal.PublicClientApplication(msalConfig);
+
+    msalInstance.handleRedirectPromise()
+      .then((resp) => {
+        // pop the token back to the opener, if needed
+        if (resp && window.opener) {
+          window.opener.postMessage({ authResponse: resp }, window.location.origin);
+        }
+      })
+      .catch(console.error)
+      .finally(() => {
+        window.close();
+      });
+  </script>
+</head>
+<body></body>
+</html>

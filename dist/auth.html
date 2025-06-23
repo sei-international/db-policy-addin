@@ -2,39 +2,43 @@
 <html>
 <head>
   <script src="https://alcdn.msauth.net/browser/2.38.0/js/msal-browser.min.js"></script>
+  <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
   <script>
-    // THIS page IS the redirectUri:
+    // MSAL config must match your taskpane.js
     const msalConfig = {
       auth: {
         clientId: "2aa8453b-2c60-4d91-baeb-8a920b648453",
         authority: "https://login.microsoftonline.com/3dfe125d-a589-44af-9fc7-113f3bff5873",
         redirectUri: window.location.origin + "/auth.html",
         navigateToLoginRequestUrl: false
-      },
-      cache: { cacheLocation: "sessionStorage" }
+      }
     };
     const msalInstance = new msal.PublicClientApplication(msalConfig);
 
-    // Kick off interactive login + token retrieval
-    msalInstance.loginPopup({
-      scopes: ["api://99b30329-bfd7-4066-a351-503f6b025619/access_as_user"]
-    })
-    .then(() => msalInstance.acquireTokenSilent({
-      scopes: ["api://99b30329-bfd7-4066-a351-503f6b025619/access_as_user"],
-      account: msalInstance.getAllAccounts()[0]
-    }))
-    .then(tokenResponse => {
-      Office.context.ui.messageParent(JSON.stringify({
-        type: "token",
-        token: tokenResponse.accessToken
-      }));
-    })
-    .catch(e => {
-      Office.context.ui.messageParent(JSON.stringify({
-        type: "error",
-        error: e.message || e
-      }));
-    });
+    // 1) On load: kick off redirect-based login if no code in URL
+    if (!window.location.search.includes("code=")) {
+      const loginRequest = {
+        scopes: ["api://99b30329-bfd7-4066-a351-503f6b025619/access_as_user"]
+      };
+      msalInstance.loginRedirect(loginRequest);
+    } else {
+      // 2) After AAD redirects back with code, handle the response
+      msalInstance.handleRedirectPromise()
+        .then(resp => {
+          const token = resp?.accessToken;
+          if (token) {
+            Office.context.ui.messageParent(JSON.stringify({ type: "token", token }));
+          } else {
+            Office.context.ui.messageParent(JSON.stringify({
+              type: "error",
+              error: "No access token received"
+            }));
+          }
+        })
+        .catch(err => {
+          Office.context.ui.messageParent(JSON.stringify({ type: "error", error: err.message }));
+        });
+    }
   </script>
 </head>
 <body></body>

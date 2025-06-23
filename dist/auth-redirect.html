@@ -8,7 +8,11 @@
         clientId: "2aa8453b-2c60-4d91-baeb-8a920b648453",
         authority: "https://login.microsoftonline.com/3dfe125d-a589-44af-9fc7-113f3bff5873",
         navigateToLoginRequestUrl: false
-      }
+      },
+      cache: {
+        cacheLocation: "localStorage", 
+        storeAuthStateInCookie: false
+        }
     };
     const msalInstance = new msal.PublicClientApplication(msalConfig);
 

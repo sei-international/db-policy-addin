@@ -3980,8 +3980,20 @@ const COLUMN_MAP = {
 
 };
 
+let _tokenCache = {
+  token: null,
+  expiresAt: 0
+};
+
 async function getToken() {
-  return new Promise((resolve, reject) => {
+  // 1) if we still have a valid token, just return it
+  if (_tokenCache.token && Date.now() < _tokenCache.expiresAt - 60000) {
+    // still at least 60 s left
+    return _tokenCache.token;
+  }
+
+  // 2) otherwise, show the dialog once more
+  const token = await new Promise((resolve, reject) => {
     Office.context.ui.displayDialogAsync(
       `${window.location.origin}/auth.html`,
       { height: 60, width: 30, displayInIframe: false },
@@ -4000,14 +4012,20 @@ async function getToken() {
             } catch {
               return reject("Malformed message from auth dialog");
             }
-            if (msg.type === "token") return resolve(msg.token);
-            if (msg.type === "error") return reject(msg.error);
+            if (msg.type === "token")   return resolve(msg.token);
+            if (msg.type === "error")   return reject(msg.error);
             reject("Unknown response from auth dialog");
           }
         );
       }
     );
   });
+
+  // 3) cache it for ~1 hour (or better yet, parse the JWT 'exp' claim)
+  _tokenCache.token     = token;
+  _tokenCache.expiresAt = Date.now() + 55 * 60_000;  // expire in 55 minutes
+
+  return token;
 }
 
 // Excel header → db column

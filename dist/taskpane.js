@@ -4000,8 +4000,8 @@ async function getToken() {
             } catch {
               return reject("Malformed message from auth dialog");
             }
-            if (msg.type === "token")   return resolve(msg.token);
-            if (msg.type === "error")   return reject(msg.error);
+            if (msg.type === "token") return resolve(msg.token);
+            if (msg.type === "error") return reject(msg.error);
             reject("Unknown response from auth dialog");
           }
         );

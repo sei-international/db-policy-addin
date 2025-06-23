@@ -3980,46 +3980,36 @@ const COLUMN_MAP = {
 
 };
 
-const msalConfig = {
-  auth: {
-    clientId: "2aa8453b-2c60-4d91-baeb-8a920b648453",
-    authority: "https://login.microsoftonline.com/3dfe125d-a589-44af-9fc7-113f3bff5873",
-    redirectUri: "https://green-tree-051651103.2.azurestaticapps.net/taskpane.html",
-    popupRedirectUri: "https://green-tree-051651103.2.azurestaticapps.net/auth-redirect.html",
-    navigateToLoginRequestUrl: false
-  },
-  cache: {
-    cacheLocation: "sessionStorage",
-    storeAuthStateInCookie: false
-  }
-};
-const msalInstance = new msal.PublicClientApplication(msalConfig);
-window.addEventListener("message", evt => {
-  if (evt.origin === window.location.origin && evt.data.authResponse) {
-    // let MSAL know which account just logged in
-    msalInstance.setActiveAccount(evt.data.authResponse.account);
-  }
-});
-
-
 async function getToken() {
-  const accounts = msalInstance.getAllAccounts();
-  const account = accounts[0];
-  const req = {
-    scopes: [`api://99b30329-bfd7-4066-a351-503f6b025619/access_as_user`],
-    account
-  };
-
-  try {
-    const silent = await msalInstance.acquireTokenSilent(req);
-    return silent.accessToken;
-  } catch {
-    // MSAL will open a popup that loads your auth-redirect.html, 
-    // handles the token, and auto-closes.
-    const popupRes = await msalInstance.acquireTokenPopup(req);
-    return popupRes.accessToken;
-  }
+  return new Promise((resolve, reject) => {
+    Office.context.ui.displayDialogAsync(
+      `${window.location.origin}/auth.html`,
+      { height: 60, width: 30, displayInIframe: false },
+      (result) => {
+        if (result.status !== Office.AsyncResultStatus.Succeeded) {
+          return reject(result.error.message);
+        }
+        const dialog = result.value;
+        dialog.addEventHandler(
+          Office.EventType.DialogMessageReceived,
+          (args) => {
+            dialog.close();
+            let msg;
+            try {
+              msg = JSON.parse(args.message);
+            } catch {
+              return reject("Malformed message from auth dialog");
+            }
+            if (msg.type === "token")   return resolve(msg.token);
+            if (msg.type === "error")   return reject(msg.error);
+            reject("Unknown response from auth dialog");
+          }
+        );
+      }
+    );
+  });
 }
+
 // Excel header → db column
 const DISPLAY_TO_DB = Object.fromEntries(
   Object.entries(COLUMN_MAP).map(([db, disp]) => [disp, db])

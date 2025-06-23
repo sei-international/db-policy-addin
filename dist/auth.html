@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="https://alcdn.msauth.net/browser/2.38.0/js/msal-browser.min.js"></script>
+  <script>
+    // THIS page IS the redirectUri:
+    const msalConfig = {
+      auth: {
+        clientId: "2aa8453b-2c60-4d91-baeb-8a920b648453",
+        authority: "https://login.microsoftonline.com/3dfe125d-a589-44af-9fc7-113f3bff5873",
+        redirectUri: window.location.origin + "/auth.html",
+        navigateToLoginRequestUrl: false
+      },
+      cache: { cacheLocation: "sessionStorage" }
+    };
+    const msalInstance = new msal.PublicClientApplication(msalConfig);
+
+    // Kick off interactive login + token retrieval
+    msalInstance.loginPopup({
+      scopes: ["api://99b30329-bfd7-4066-a351-503f6b025619/access_as_user"]
+    })
+    .then(() => msalInstance.acquireTokenSilent({
+      scopes: ["api://99b30329-bfd7-4066-a351-503f6b025619/access_as_user"],
+      account: msalInstance.getAllAccounts()[0]
+    }))
+    .then(tokenResponse => {
+      Office.context.ui.messageParent(JSON.stringify({
+        type: "token",
+        token: tokenResponse.accessToken
+      }));
+    })
+    .catch(e => {
+      Office.context.ui.messageParent(JSON.stringify({
+        type: "error",
+        error: e.message || e
+      }));
+    });
+  </script>
+</head>
+<body></body>
+</html>

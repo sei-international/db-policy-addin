@@ -3984,20 +3984,11 @@ let _tokenCache = {
   token: null,
   expiresAt: 0
 };
-function createLinkedElement(value) {
-  const el = document.createElement("span");
-  if (typeof value === "string" && value.startsWith("http")) {
-    const a = document.createElement("a");
-    a.href = value;
-    a.innerText = value;
-    a.target = "_blank";
-    a.rel = "noopener noreferrer";
-    el.appendChild(a);
-  } else {
-    el.textContent = value;
-  }
-  return el;
+function safeHyperlinkFormula(url) {
+  const escaped = url.replace(/"/g, '""');
+  return `=HYPERLINK("${escaped}", "${escaped}")`;
 }
+
 
 async function getToken() {
   // 1) if we still have a valid token, just return it
@@ -4453,9 +4444,10 @@ async function pullFromDb() {
             const formulas = data.map(row => {
               const url = row[hyperlinkColIdx];
               return url
-                ? [`=HYPERLINK("${url}", "${url}")`]
+                ? [safeHyperlinkFormula(url)]
                 : [""];
             });
+            
 
             const hyperlinkRange = sheet.getRangeByIndexes(1, hyperlinkColIdx, data.length, 1);
             hyperlinkRange.formulas = formulas;
@@ -4622,9 +4614,10 @@ async function pullOneTable(tableName) {
         const formulas = data.map(row => {
           const url = row[hyperlinkColIdx];
           return url
-            ? [`=HYPERLINK("${url}", "${url}")`]
+            ? [safeHyperlinkFormula(url)]
             : [""];
         });
+        
 
         const hyperlinkRange = sheet.getRangeByIndexes(1, hyperlinkColIdx, data.length, 1);
         hyperlinkRange.formulas = formulas;
@@ -4798,6 +4791,14 @@ async function pushToDb() {
           const dbCol = headerMap[i];
           if (dbCol && dbCols.includes(dbCol)) {
             obj[dbCol] = cell;
+            let value = cell;
+
+            if (typeof value === "string" && value.startsWith("=")) {
+              const match = value.match(/HYPERLINK\("([^"]+)"/i);
+              if (match) value = match[1];
+            }
+
+            obj[dbCol] = value;
           }
         });
 

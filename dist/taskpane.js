@@ -4444,10 +4444,11 @@ async function pullFromDb() {
         // Write rows
         if (rows.length) {
           const data = rows.map(r => orderedDbCols.map(col => r[col] ?? null));
-          const hyperlinkColIdx = headers.indexOf("Hyperlink");
+          sheet.getRangeByIndexes(1, 0, data.length, headers.length).values = data;
+          await ctx.sync();
 
+          // ✅ Then overwrite just the hyperlink column with formulas
           if (hyperlinkColIdx >= 0) {
-            // Construct formulas for the hyperlink column only
             const formulas = data.map(row => {
               const url = row[hyperlinkColIdx];
               return url
@@ -4455,18 +4456,10 @@ async function pullFromDb() {
                 : [""];
             });
 
-            // Apply formulas to just the Hyperlink column
             const hyperlinkRange = sheet.getRangeByIndexes(1, hyperlinkColIdx, data.length, 1);
             hyperlinkRange.formulas = formulas;
+            await ctx.sync();
           }
-
-          // Overwrite the rest of the data using .values
-          // (optionally blank out the Hyperlink column here to avoid duplication)
-          if (hyperlinkColIdx >= 0) {
-            data.forEach(row => row[hyperlinkColIdx] = null); // blank out hyperlink for now
-          }
-          sheet.getRangeByIndexes(1, 0, data.length, headers.length).values = data;
-          await ctx.sync();
         }
 
         // Convert to Excel Table
@@ -4619,10 +4612,11 @@ async function pullOneTable(tableName) {
     // data
     if (rows.length) {
       const data = rows.map(r => orderedDbCols.map(col => r[col] ?? null));
-      const hyperlinkColIdx = headers.indexOf("Hyperlink");
+      sheet.getRangeByIndexes(1, 0, data.length, headers.length).values = data;
+      await ctx.sync();
 
+      // ✅ Then overwrite just the hyperlink column with formulas
       if (hyperlinkColIdx >= 0) {
-        // Construct formulas for the hyperlink column only
         const formulas = data.map(row => {
           const url = row[hyperlinkColIdx];
           return url
@@ -4630,17 +4624,10 @@ async function pullOneTable(tableName) {
             : [""];
         });
 
-        // Apply formulas to just the Hyperlink column
         const hyperlinkRange = sheet.getRangeByIndexes(1, hyperlinkColIdx, data.length, 1);
         hyperlinkRange.formulas = formulas;
+        await ctx.sync();
       }
-
-      // Overwrite the rest of the data using .values
-      // (optionally blank out the Hyperlink column here to avoid duplication)
-      if (hyperlinkColIdx >= 0) {
-        data.forEach(row => row[hyperlinkColIdx] = null); // blank out hyperlink for now
-      }
-      sheet.getRangeByIndexes(1, 0, data.length, headers.length).values = data;
       await ctx.sync();
     }
 

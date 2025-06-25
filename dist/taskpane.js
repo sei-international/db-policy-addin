@@ -4444,6 +4444,7 @@ async function pullFromDb() {
         // Write rows
         if (rows.length) {
           const data = rows.map(r => orderedDbCols.map(col => r[col] ?? null));
+          const hyperlinkColIdx = headers.indexOf("Hyperlink");
           sheet.getRangeByIndexes(1, 0, data.length, headers.length).values = data;
           await ctx.sync();
 
@@ -4612,6 +4613,7 @@ async function pullOneTable(tableName) {
     // data
     if (rows.length) {
       const data = rows.map(r => orderedDbCols.map(col => r[col] ?? null));
+      const hyperlinkColIdx = headers.indexOf("Hyperlink");
       sheet.getRangeByIndexes(1, 0, data.length, headers.length).values = data;
       await ctx.sync();
 

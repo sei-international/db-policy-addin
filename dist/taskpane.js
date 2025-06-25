@@ -3984,11 +3984,20 @@ let _tokenCache = {
   token: null,
   expiresAt: 0
 };
-function safeHyperlinkFormula(url) {
-  const escaped = url.replace(/"/g, '""');
-  return `=HYPERLINK("${escaped}", "${escaped}")`;
+function createLinkedElement(value) {
+  const el = document.createElement("span");
+  if (typeof value === "string" && value.startsWith("http")) {
+    const a = document.createElement("a");
+    a.href = value;
+    a.innerText = value;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    el.appendChild(a);
+  } else {
+    el.textContent = value;
+  }
+  return el;
 }
-
 
 async function getToken() {
   // 1) if we still have a valid token, just return it
@@ -4435,32 +4444,8 @@ async function pullFromDb() {
         // Write rows
         if (rows.length) {
           const data = rows.map(r => orderedDbCols.map(col => r[col] ?? null));
-          const hyperlinkColIdx = headers.indexOf("Hyperlink");
-          if (hyperlinkColIdx >= 0) {
-            data.forEach(row => row[hyperlinkColIdx] = null); // Clear Hyperlink column
-          }
           sheet.getRangeByIndexes(1, 0, data.length, headers.length).values = data;
-          
-          if (hyperlinkColIdx >= 0) {
-            const formulas = rows.map(r => {
-              const url = r[orderedDbCols[hyperlinkColIdx]];
-              try {
-                const parsed = new URL(url);
-                if (!["http:", "https:"].includes(parsed.protocol)){
-                  console.log("made a url, but error occured on", url);
-                  return [""];
-                }
-              } catch {
-                console.log("error occurred on", url);
-                return [""];
-              }
-              const safeUrl = url.replace(/"/g, '""');
-              return [`=HYPERLINK("${safeUrl}", "${safeUrl}")`];
-            });
-          
-            const hyperlinkRange = sheet.getRangeByIndexes(1, hyperlinkColIdx, data.length, 1);
-            hyperlinkRange.formulas = formulas;
-          }
+          await ctx.sync();
         }
 
         // Convert to Excel Table
@@ -4613,32 +4598,7 @@ async function pullOneTable(tableName) {
     // data
     if (rows.length) {
       const data = rows.map(r => orderedDbCols.map(col => r[col] ?? null));
-      const hyperlinkColIdx = headers.indexOf("Hyperlink");
-      if (hyperlinkColIdx >= 0) {
-        data.forEach(row => row[hyperlinkColIdx] = null); // Clear Hyperlink column
-      }
       sheet.getRangeByIndexes(1, 0, data.length, headers.length).values = data;
-      
-      if (hyperlinkColIdx >= 0) {
-        const formulas = rows.map(r => {
-          const url = r[orderedDbCols[hyperlinkColIdx]];
-          try {
-            const parsed = new URL(url);
-            if (!["http:", "https:"].includes(parsed.protocol)){
-              console.log("made a url, but error occured on", url);
-              return [""];
-            }
-          } catch {
-            console.log("error occurred on", url);
-            return [""];
-          }
-          const safeUrl = url.replace(/"/g, '""');
-          return [`=HYPERLINK("${safeUrl}", "${safeUrl}")`];
-        });
-      
-        const hyperlinkRange = sheet.getRangeByIndexes(1, hyperlinkColIdx, data.length, 1);
-        hyperlinkRange.formulas = formulas;
-      }
       await ctx.sync();
     }
 
@@ -4807,14 +4767,6 @@ async function pushToDb() {
           const dbCol = headerMap[i];
           if (dbCol && dbCols.includes(dbCol)) {
             obj[dbCol] = cell;
-            let value = cell;
-
-            if (typeof value === "string" && value.startsWith("=")) {
-              const match = value.match(/HYPERLINK\("([^"]+)"/i);
-              if (match) value = match[1];
-            }
-
-            obj[dbCol] = value;
           }
         });
 

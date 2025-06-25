@@ -4773,6 +4773,7 @@ async function pushToDb() {
 
         const orig = cacheMap.get(obj.doc_code);
         const isChanged = !orig || Object.keys(obj).some(k =>
+          k !== "date_entry" &&
           String(orig[k] ?? "") !== String(obj[k] ?? "")
         );
 

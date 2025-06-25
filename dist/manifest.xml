@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<OfficeApp
-    xmlns="http://schemas.microsoft.com/office/appforoffice/1.1"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0"
-    xsi:type="TaskPaneApp">
+<OfficeApp xmlns="http://schemas.microsoft.com/office/appforoffice/1.1"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0"
+           xsi:type="TaskPaneApp">
 
   <Id>b84236c4-6fd7-4f34-877a-5eada5ae2484</Id>
   <Version>1.0.0.0</Version>
@@ -23,49 +22,23 @@
     <Host Name="Workbook"/>
   </Hosts>
 
-  <Requirements>
-    <Sets DefaultMinVersion="1.1">
-      <Set Name="CustomFunctionsRuntime" MinVersion="1.1"/>
-    </Sets>
-  </Requirements>
-
   <DefaultSettings>
     <SourceLocation DefaultValue="https://green-tree-051651103.2.azurestaticapps.net/taskpane.html"/>
   </DefaultSettings>
 
   <Permissions>ReadWriteDocument</Permissions>
 
-  <VersionOverrides
-      xmlns="http://schemas.microsoft.com/office/taskpaneappversionoverrides"
-      xsi:type="VersionOverridesV1_0">
+  <VersionOverrides xmlns="http://schemas.microsoft.com/office/taskpaneappversionoverrides"
+                    xsi:type="VersionOverridesV1_0">
 
     <Hosts>
       <Host xsi:type="Workbook">
-
-        <AllFormFactors>
-          <ExtensionPoint xsi:type="CustomFunctions">
-            <Script>
-              <SourceLocation resid="Functions.Script.Url"/>
-            </Script>
-            <Page>
-              <SourceLocation resid="Functions.Page.Url"/>
-            </Page>
-            <Metadata>
-              <SourceLocation resid="Functions.Metadata.Url"/>
-            </Metadata>
-            <Namespace resid="Functions.Namespace"/>
-          </ExtensionPoint>
-        </AllFormFactors>
-
-        <!-- ‣ DesktopFormFactor → Ribbon Command (PrimaryCommandSurface) -->
         <DesktopFormFactor>
           <GetStarted>
             <Title resid="GetStarted.Title"/>
             <Description resid="GetStarted.Description"/>
             <LearnMoreUrl resid="GetStarted.LearnMoreUrl"/>
           </GetStarted>
-
-          <FunctionFile resid="Commands.Url"/>
 
           <ExtensionPoint xsi:type="PrimaryCommandSurface">
             <OfficeTab id="TabHome">
@@ -96,7 +69,6 @@
             </OfficeTab>
           </ExtensionPoint>
         </DesktopFormFactor>
-
       </Host>
     </Hosts>
 
@@ -108,27 +80,21 @@
       </bt:Images>
 
       <bt:Urls>
-        <bt:Url id="Functions.Script.Url"       DefaultValue="https://green-tree-051651103.2.azurestaticapps.net/public/functions.js"/>
-        <bt:Url id="Functions.Metadata.Url"     DefaultValue="https://green-tree-051651103.2.azurestaticapps.net/public/functions.json"/>
-        <bt:Url id="Functions.Page.Url"         DefaultValue="https://green-tree-051651103.2.azurestaticapps.net/public/functions.html"/>
-        <bt:Url id="GetStarted.LearnMoreUrl"    DefaultValue="https://go.microsoft.com/fwlink/?LinkId=276812"/>
-        <bt:Url id="Commands.Url"               DefaultValue="https://green-tree-051651103.2.azurestaticapps.net/commands.html"/>
-        <bt:Url id="Taskpane.Url"               DefaultValue="https://green-tree-051651103.2.azurestaticapps.net/taskpane.html"/>
+        <bt:Url id="GetStarted.LearnMoreUrl" DefaultValue="https://go.microsoft.com/fwlink/?LinkId=276812"/>
+        <bt:Url id="Taskpane.Url" DefaultValue="https://green-tree-051651103.2.azurestaticapps.net/taskpane.html"/>
       </bt:Urls>
 
       <bt:ShortStrings>
-        <bt:String id="Functions.Namespace"      DefaultValue="SEI Policies"/>
-        <bt:String id="GetStarted.Title"         DefaultValue="Get started with SEI Policy Database Add-in!"/>
-        <bt:String id="CommandsGroup.Label"      DefaultValue="Commands Group"/>
-        <bt:String id="TaskpaneButton.Label"     DefaultValue="SEI Policy Database Add-in"/>
+        <bt:String id="GetStarted.Title" DefaultValue="Get started with SEI Policy Database Add-in!"/>
+        <bt:String id="CommandsGroup.Label" DefaultValue="Commands Group"/>
+        <bt:String id="TaskpaneButton.Label" DefaultValue="SEI Policy Database Add-in"/>
       </bt:ShortStrings>
 
       <bt:LongStrings>
-        <bt:String id="GetStarted.Description"   DefaultValue="Add-in loaded successfully. Go to the HOME tab and click the 'SEI Policy Database Add-in' button to get started."/>
-        <bt:String id="TaskpaneButton.Tooltip"   DefaultValue="Click to Show SEI Policy Add-in"/>
+        <bt:String id="GetStarted.Description" DefaultValue="Add-in loaded successfully. Go to the HOME tab and click the button to get started."/>
+        <bt:String id="TaskpaneButton.Tooltip" DefaultValue="Click to open the SEI Policy Add-in"/>
       </bt:LongStrings>
     </Resources>
 
   </VersionOverrides>
-
 </OfficeApp>

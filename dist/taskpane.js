@@ -4451,22 +4451,6 @@ async function pullFromDb() {
           }
           await ctx.sync();
         }
-        const hyperlinkColIdx = headers.indexOf("Hyperlink");
-        if (hyperlinkColIdx >= 0) {
-          data.forEach((row, i) => {
-            const url = row[hyperlinkColIdx];
-            if (typeof url === "string" && url.startsWith("http")) {
-              // get the cell at row (i+1) because row 0 is the header
-              const cell = sheet.getRangeByIndexes(i + 1, hyperlinkColIdx, 1, 1);
-              // set its hyperlink property (address + display text)
-              cell.hyperlink = {
-                address: url,
-                textToDisplay: url
-              };
-            }
-          });
-          await ctx.sync();
-        }
         // Convert to Excel Table
         const used = sheet.getUsedRange();
         used.load("rowCount, columnCount");

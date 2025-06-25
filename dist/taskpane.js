@@ -4436,22 +4436,26 @@ async function pullFromDb() {
         if (rows.length) {
           const data = rows.map(r => orderedDbCols.map(col => r[col] ?? null));
           const hyperlinkColIdx = headers.indexOf("Hyperlink");
-          sheet.getRangeByIndexes(1, 0, data.length, headers.length).values = data;
-          await ctx.sync();
-
-          // ✅ Then overwrite just the hyperlink column with formulas
           if (hyperlinkColIdx >= 0) {
-            const formulas = data.map(row => {
-              const url = row[hyperlinkColIdx];
-              return url
-                ? [safeHyperlinkFormula(url)]
-                : [""];
+            data.forEach(row => row[hyperlinkColIdx] = null); // Clear Hyperlink column
+          }
+          sheet.getRangeByIndexes(1, 0, data.length, headers.length).values = data;
+          
+          if (hyperlinkColIdx >= 0) {
+            const formulas = rows.map(r => {
+              const url = r[orderedDbCols[hyperlinkColIdx]];
+              try {
+                const parsed = new URL(url);
+                if (!["http:", "https:"].includes(parsed.protocol)) return [""];
+              } catch {
+                return [""];
+              }
+              const safeUrl = url.replace(/"/g, '""');
+              return [`=HYPERLINK("${safeUrl}", "${safeUrl}")`];
             });
-            
-
+          
             const hyperlinkRange = sheet.getRangeByIndexes(1, hyperlinkColIdx, data.length, 1);
             hyperlinkRange.formulas = formulas;
-            await ctx.sync();
           }
         }
 
@@ -4606,22 +4610,26 @@ async function pullOneTable(tableName) {
     if (rows.length) {
       const data = rows.map(r => orderedDbCols.map(col => r[col] ?? null));
       const hyperlinkColIdx = headers.indexOf("Hyperlink");
-      sheet.getRangeByIndexes(1, 0, data.length, headers.length).values = data;
-      await ctx.sync();
-
-      // ✅ Then overwrite just the hyperlink column with formulas
       if (hyperlinkColIdx >= 0) {
-        const formulas = data.map(row => {
-          const url = row[hyperlinkColIdx];
-          return url
-            ? [safeHyperlinkFormula(url)]
-            : [""];
+        data.forEach(row => row[hyperlinkColIdx] = null); // Clear Hyperlink column
+      }
+      sheet.getRangeByIndexes(1, 0, data.length, headers.length).values = data;
+      
+      if (hyperlinkColIdx >= 0) {
+        const formulas = rows.map(r => {
+          const url = r[orderedDbCols[hyperlinkColIdx]];
+          try {
+            const parsed = new URL(url);
+            if (!["http:", "https:"].includes(parsed.protocol)) return [""];
+          } catch {
+            return [""];
+          }
+          const safeUrl = url.replace(/"/g, '""');
+          return [`=HYPERLINK("${safeUrl}", "${safeUrl}")`];
         });
-        
-
+      
         const hyperlinkRange = sheet.getRangeByIndexes(1, hyperlinkColIdx, data.length, 1);
         hyperlinkRange.formulas = formulas;
-        await ctx.sync();
       }
       await ctx.sync();
     }

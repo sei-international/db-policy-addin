@@ -4446,8 +4446,12 @@ async function pullFromDb() {
               const url = r[orderedDbCols[hyperlinkColIdx]];
               try {
                 const parsed = new URL(url);
-                if (!["http:", "https:"].includes(parsed.protocol)) return [""];
+                if (!["http:", "https:"].includes(parsed.protocol)){
+                  console.log("made a url, but error occured on", url);
+                  return [""];
+                }
               } catch {
+                console.log("error occurred on", url);
                 return [""];
               }
               const safeUrl = url.replace(/"/g, '""');
@@ -4620,8 +4624,12 @@ async function pullOneTable(tableName) {
           const url = r[orderedDbCols[hyperlinkColIdx]];
           try {
             const parsed = new URL(url);
-            if (!["http:", "https:"].includes(parsed.protocol)) return [""];
+            if (!["http:", "https:"].includes(parsed.protocol)){
+              console.log("made a url, but error occured on", url);
+              return [""];
+            }
           } catch {
+            console.log("error occurred on", url);
             return [""];
           }
           const safeUrl = url.replace(/"/g, '""');

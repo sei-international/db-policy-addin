@@ -4431,6 +4431,24 @@ async function pullFromDb() {
         if (rows.length) {
           const data = rows.map(r => orderedDbCols.map(col => r[col] ?? null));
           sheet.getRangeByIndexes(1, 0, data.length, headers.length).values = data;
+          if (data.length) {
+            // write data rows
+            sheet.getRangeByIndexes(1, 0, data.length, headers.length).values = data;
+            await ctx.sync();
+        
+            // now inject real Excel hyperlinks in the "Hyperlink" column
+            const hyperlinkColIdx = headers.indexOf("Hyperlink");
+            if (hyperlinkColIdx >= 0) {
+              data.forEach((row, i) => {
+                const url = row[hyperlinkColIdx];
+                if (typeof url === "string" && url.startsWith("http")) {
+                  const cell = sheet.getRangeByIndexes(i + 1, hyperlinkColIdx, 1, 1);
+                  cell.hyperlink = { address: url, textToDisplay: url };
+                }
+              });
+              await ctx.sync();
+            }
+          }
           await ctx.sync();
         }
         const hyperlinkColIdx = headers.indexOf("Hyperlink");
@@ -4600,24 +4618,27 @@ async function pullOneTable(tableName) {
     if (rows.length) {
       const data = rows.map(r => orderedDbCols.map(col => r[col] ?? null));
       sheet.getRangeByIndexes(1, 0, data.length, headers.length).values = data;
-      await ctx.sync();
-    }
-    const hyperlinkColIdx = headers.indexOf("Hyperlink");
-    if (hyperlinkColIdx >= 0) {
-      data.forEach((row, i) => {
-        const url = row[hyperlinkColIdx];
-        if (typeof url === "string" && url.startsWith("http")) {
-          // get the cell at row (i+1) because row 0 is the header
-          const cell = sheet.getRangeByIndexes(i + 1, hyperlinkColIdx, 1, 1);
-          // set its hyperlink property (address + display text)
-          cell.hyperlink = {
-            address: url,
-            textToDisplay: url
-          };
+      if (data.length) {
+        // write data rows
+        sheet.getRangeByIndexes(1, 0, data.length, headers.length).values = data;
+        await ctx.sync();
+    
+        // now inject real Excel hyperlinks in the "Hyperlink" column
+        const hyperlinkColIdx = headers.indexOf("Hyperlink");
+        if (hyperlinkColIdx >= 0) {
+          data.forEach((row, i) => {
+            const url = row[hyperlinkColIdx];
+            if (typeof url === "string" && url.startsWith("http")) {
+              const cell = sheet.getRangeByIndexes(i + 1, hyperlinkColIdx, 1, 1);
+              cell.hyperlink = { address: url, textToDisplay: url };
+            }
+          });
+          await ctx.sync();
         }
-      });
+      }
       await ctx.sync();
     }
+    
     // convert to Table + autofit
     const used = sheet.getUsedRange();
     used.load("rowCount,columnCount");

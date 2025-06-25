@@ -3984,20 +3984,6 @@ let _tokenCache = {
   token: null,
   expiresAt: 0
 };
-function createLinkedElement(value) {
-  const el = document.createElement("span");
-  if (typeof value === "string" && value.startsWith("http")) {
-    const a = document.createElement("a");
-    a.href = value;
-    a.innerText = value;
-    a.target = "_blank";
-    a.rel = "noopener noreferrer";
-    el.appendChild(a);
-  } else {
-    el.textContent = value;
-  }
-  return el;
-}
 
 async function getToken() {
   // 1) if we still have a valid token, just return it
@@ -4447,7 +4433,22 @@ async function pullFromDb() {
           sheet.getRangeByIndexes(1, 0, data.length, headers.length).values = data;
           await ctx.sync();
         }
-
+        const hyperlinkColIdx = headers.indexOf("Hyperlink");
+        if (hyperlinkColIdx >= 0) {
+          data.forEach((row, i) => {
+            const url = row[hyperlinkColIdx];
+            if (typeof url === "string" && url.startsWith("http")) {
+              // get the cell at row (i+1) because row 0 is the header
+              const cell = sheet.getRangeByIndexes(i + 1, hyperlinkColIdx, 1, 1);
+              // set its hyperlink property (address + display text)
+              cell.hyperlink = {
+                address: url,
+                textToDisplay: url
+              };
+            }
+          });
+          await ctx.sync();
+        }
         // Convert to Excel Table
         const used = sheet.getUsedRange();
         used.load("rowCount, columnCount");
@@ -4601,7 +4602,22 @@ async function pullOneTable(tableName) {
       sheet.getRangeByIndexes(1, 0, data.length, headers.length).values = data;
       await ctx.sync();
     }
-
+    const hyperlinkColIdx = headers.indexOf("Hyperlink");
+    if (hyperlinkColIdx >= 0) {
+      data.forEach((row, i) => {
+        const url = row[hyperlinkColIdx];
+        if (typeof url === "string" && url.startsWith("http")) {
+          // get the cell at row (i+1) because row 0 is the header
+          const cell = sheet.getRangeByIndexes(i + 1, hyperlinkColIdx, 1, 1);
+          // set its hyperlink property (address + display text)
+          cell.hyperlink = {
+            address: url,
+            textToDisplay: url
+          };
+        }
+      });
+      await ctx.sync();
+    }
     // convert to Table + autofit
     const used = sheet.getUsedRange();
     used.load("rowCount,columnCount");

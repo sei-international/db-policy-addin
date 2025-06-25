@@ -3984,6 +3984,20 @@ let _tokenCache = {
   token: null,
   expiresAt: 0
 };
+function createLinkedElement(value) {
+  const el = document.createElement("span");
+  if (typeof value === "string" && value.startsWith("http")) {
+    const a = document.createElement("a");
+    a.href = value;
+    a.innerText = value;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    el.appendChild(a);
+  } else {
+    el.textContent = value;
+  }
+  return el;
+}
 
 async function getToken() {
   // 1) if we still have a valid token, just return it

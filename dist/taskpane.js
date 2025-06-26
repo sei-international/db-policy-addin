@@ -4438,7 +4438,7 @@ async function pullFromDb() {
             await ctx.sync();
         
             // inject real Excel hyperlinks in the "Hyperlink" column
-            const hyperlinkColIdx = headers.indexOf("Hyperlink");
+            const hyperlinkColIdx = headers.indexOf("Download File");
             if (hyperlinkColIdx >= 0) {
               data.forEach((row, i) => {
                 const url = row[hyperlinkColIdx];
@@ -4609,7 +4609,7 @@ async function pullOneTable(tableName) {
         await ctx.sync();
     
         // inject real Excel hyperlinks in the "Hyperlink" column
-        const hyperlinkColIdx = headers.indexOf("Hyperlink");
+        const hyperlinkColIdx = headers.indexOf("Download File");
         if (hyperlinkColIdx >= 0) {
           data.forEach((row, i) => {
             const url = row[hyperlinkColIdx];

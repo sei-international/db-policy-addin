@@ -3868,7 +3868,7 @@ const COLUMN_MAP = {
   policy_year:         "Policy Date Year (if applicable)",
   policy_format:       "Policy Type",
   additional_info:     "Additional Info on Policy",
-  hyperlink:           "Hyperlink",
+  hyperlink:           "Download File",
   doc_online:          "Document Unavailable Online?",
   additional_links:    "Additional Relevant Links",
   meta_qa:             "Internal Questions & Answers",
@@ -3912,6 +3912,7 @@ const COLUMN_MAP = {
   advisory_services:        "Advisory Services",
   financial_service_access: "Financial Services Access",
   qa:                       "Internal Q&A",
+  hyperlink:           "Download File",
 
   // fiscal_measures
   exemptions:               "Exemption & Fiscal Measures Description",
@@ -3930,6 +3931,7 @@ const COLUMN_MAP = {
   accelerated_depreciation: "Accelerated Depreciation",
   form:                     "Form (refunds, credits, schedules)",
   fiscal_stability:         "Fiscal Stability",
+  hyperlink:           "Download File",
 
   // critical_minerals
   disclosure_requirements:      "Contract Disclosure Requirements?",
@@ -3963,6 +3965,7 @@ const COLUMN_MAP = {
   mining_operations:            "Renewable Energy in Mining?",
   local_investments:            "Local Energy Investments?",
   site_rehabilitation:          "Site Rehabilitation Requirements?",
+  hyperlink:           "Download File",
 
   // just transitions
 
@@ -3976,7 +3979,8 @@ const COLUMN_MAP = {
   public_procurement:           "RE public procurement",
   re_fund:                      "RE Fund?",
   env_impact:                   "environmental impact",
-  decomissioning:               "decomissioning"
+  decomissioning:               "decomissioning",
+  hyperlink:           "Download File",
 
 
 };
@@ -4022,7 +4026,7 @@ async function getToken() {
     );
   });
 
-  // 3) cache it for ~1 hour (or better yet, parse the JWT 'exp' claim)
+  // 3) cache it for ~1 hour 
   _tokenCache.token     = token;
   _tokenCache.expiresAt = Date.now() + 55 * 60_000;  // expire in 55 minutes
 
@@ -4262,10 +4266,6 @@ async function pullOnePolicy(tableName, code) {
   });
 }
 
-
-
-
-// start it up in Office.onReady:
 Office.onReady(async info => {
   if (info.host !== Office.HostType.Excel) return;
   if (!Office.context.requirements.isSetSupported("NestedAppAuth", "1.1")) {
@@ -4437,7 +4437,7 @@ async function pullFromDb() {
             sheet.getRangeByIndexes(1, 0, data.length, headers.length).values = data;
             await ctx.sync();
         
-            // now inject real Excel hyperlinks in the "Hyperlink" column
+            // inject real Excel hyperlinks in the "Hyperlink" column
             const hyperlinkColIdx = headers.indexOf("Hyperlink");
             if (hyperlinkColIdx >= 0) {
               data.forEach((row, i) => {
@@ -4608,7 +4608,7 @@ async function pullOneTable(tableName) {
         sheet.getRangeByIndexes(1, 0, data.length, headers.length).values = data;
         await ctx.sync();
     
-        // now inject real Excel hyperlinks in the "Hyperlink" column
+        // inject real Excel hyperlinks in the "Hyperlink" column
         const hyperlinkColIdx = headers.indexOf("Hyperlink");
         if (hyperlinkColIdx >= 0) {
           data.forEach((row, i) => {
@@ -4855,9 +4855,6 @@ async function pushToDb() {
     }
   }
 }
-
-
-
 
 
 // helper to ask user

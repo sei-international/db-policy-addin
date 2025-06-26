@@ -3751,7 +3751,8 @@ const INHERITED = [
   "country",
   "policy_year",
   "policy_name",
-  "policy_format"
+  "policy_format",
+  "hyperlink"
 ];
 const dropdowns = {
   "Technology": [

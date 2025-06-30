@@ -4389,11 +4389,11 @@ async function pullFromDb() {
       // 2b) Build ordered column list
       let orderedDbCols;
       if (tableName === "policies") {
-        const primary = ["country", "doc_code", "policy_year", "policy_name", "policy_format"];
+        const primary = ["country", "doc_code", "hyperlink", "policy_year", "policy_name", "policy_format"];
         const rest = dbCols.filter(c => !primary.includes(c));
         orderedDbCols = [...primary, ...rest];
       } else {
-        const extras = ["country", "policy_year", "policy_name", "policy_format", "date_entry"];
+        const extras = ["hyperlink", "country", "policy_year", "policy_name", "policy_format", "date_entry"];
         const rest = dbCols.filter(c => c !== "doc_code" && !extras.includes(c));
         orderedDbCols = ["doc_code", ...extras.filter(c => dbCols.includes(c)), ...rest];
       }
@@ -4444,7 +4444,7 @@ async function pullFromDb() {
                 const url = row[hyperlinkColIdx];
                 if (typeof url === "string" && url.startsWith("http")) {
                   const cell = sheet.getRangeByIndexes(i + 1, hyperlinkColIdx, 1, 1);
-                  cell.hyperlink = { address: url, textToDisplay: url };
+                  cell.hyperlink = { address: url, textToDisplay: "Access PDF" };
                 }
               });
               await ctx.sync();
@@ -4560,10 +4560,10 @@ async function pullOneTable(tableName) {
   // build orderedDbCols & headers
   let orderedDbCols;
   if (tableName === "policies") {
-    const primary = ["country", "doc_code", "policy_year", "policy_name", "policy_format"];
+    const primary = ["country", "doc_code", "hyperlink", "policy_year", "policy_name", "policy_format"];
     orderedDbCols = [...primary, ...dbCols.filter(c => !primary.includes(c))];
   } else {
-    const extras = ["country", "policy_year", "policy_name", "policy_format", "date_entry"];
+    const extras = ["hyperlink", "country", "policy_year", "policy_name", "policy_format", "date_entry"];
     orderedDbCols = [
       "doc_code",
       ...extras.filter(c => dbCols.includes(c)),
@@ -4615,7 +4615,7 @@ async function pullOneTable(tableName) {
             const url = row[hyperlinkColIdx];
             if (typeof url === "string" && url.startsWith("http")) {
               const cell = sheet.getRangeByIndexes(i + 1, hyperlinkColIdx, 1, 1);
-              cell.hyperlink = { address: url, textToDisplay: url };
+              cell.hyperlink = { address: url, textToDisplay: "Access PDF" };
             }
           });
           await ctx.sync();

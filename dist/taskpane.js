@@ -3872,7 +3872,7 @@ const COLUMN_MAP = {
   doc_online:          "Document Unavailable Online?",
   additional_links:    "Additional Relevant Links",
   meta_qa:             "Internal Questions & Answers",
-
+  language:            "Policy Language",
   // social_acceptance
   page_number:              "Page Number",
   revenue_sharing:          "Sharing Revenue of Projects",

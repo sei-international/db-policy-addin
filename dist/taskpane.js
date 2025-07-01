@@ -4307,7 +4307,7 @@ async function populateTableCheckboxes() {
   if (container.dataset.populated) return;     // already done
   container.dataset.populated = "true";
   container.innerHTML = "";
-  showLoading("Loading table list…");
+  showLoading("Connecting to the server...");
   try {
     const res = await authFetch(`${apiBase}/tables`, { method: "GET" });
     if (!res.ok) {

@@ -4032,8 +4032,16 @@ async function getToken() {
 
   return token;
 }
+function showLoading(msg) {
+  document.getElementById("loadingMessage").innerText = msg;
+  document.getElementById("loadingContainer").classList.remove("hidden");
+}
+function hideLoading() {
+  document.getElementById("loadingContainer").classList.add("hidden");
+  document.getElementById("loadingMessage").innerText = "";
+}
 
-// Excel header → db column
+// Excel header > db column
 const DISPLAY_TO_DB = Object.fromEntries(
   Object.entries(COLUMN_MAP).map(([db, disp]) => [disp, db])
 );
@@ -4130,11 +4138,15 @@ document.getElementById("connectForm").addEventListener("submit", async (evt) =>
   try {
     await getToken(); // will trigger MS popup if needed
     status.innerText = "✅ Signed in!";
+    showLoading("Server is starting up (this may take a moment)…");
     await populateTableCheckboxes();
     isConnected = true;
     document.getElementById("tab-pull").classList.remove("disabled");
   } catch (err) {
-    status.innerText = `❌ ${err.message}`;
+    status.innerText = `❌ Something unexpected occured while connecting to the server and your request timed out. Please refresh and try again.`;
+  }
+  finally {
+    hideLoading();
   }
 });
 
@@ -4295,7 +4307,7 @@ async function populateTableCheckboxes() {
   if (container.dataset.populated) return;     // already done
   container.dataset.populated = "true";
   container.innerHTML = "";
-
+  showLoading("Loading table list…");
   try {
     const res = await authFetch(`${apiBase}/tables`, { method: "GET" });
     if (!res.ok) {
@@ -4328,6 +4340,9 @@ async function populateTableCheckboxes() {
     console.error("Failed to load tables:", e);
     document.getElementById("status").innerText =
       `There was an error pulling the following sheets from the database: ${e.message}. Try pulling the sheets one at a time, or refresh this pane. If the error persists, contact julia.weppler@sei.org.`;
+  }
+  finally {
+    hideLoading();
   }
 }
 

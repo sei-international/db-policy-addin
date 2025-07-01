@@ -12,7 +12,6 @@ body, button, input, summary {
     --accent-light:  #4ba781;
   }
   
-  /* Light / Dark theming */
   [data-theme="light"] {
     background: var(--bg-light);
     color:      var(--text-light);
@@ -22,7 +21,6 @@ body, button, input, summary {
     color:      var(--text-dark);
   }
   
-  /* Base reset */
   html, body {
     width:           100%;
     height:          100%;
@@ -34,7 +32,6 @@ body, button, input, summary {
     flex-direction:  column;
   }
   
-  /* Header bar */
   .header {
     display:       flex;
     align-items:   center;
@@ -49,7 +46,6 @@ body, button, input, summary {
     margin-right:  0.5rem;
   }
   
-  /* Tabs */
   .tabs {
     display:       flex;
     background:    rgba(0,0,0,0.05);
@@ -70,7 +66,6 @@ body, button, input, summary {
     background-color: var(--bg-dark);
   }
   
-  /* Content panels */
   .content {
     flex:         1 1 auto;
     overflow-y:   auto;
@@ -86,7 +81,6 @@ body, button, input, summary {
     opacity:      0.8;
   }
   
-  /* Controls row */
   .controls {
     flex:          0 0 auto;
     padding:       1rem;
@@ -119,7 +113,6 @@ body, button, input, summary {
     background:    var(--accent-light);
   }
   
-  /* Status bar */
   #status {
     flex:          0 0 auto;
     padding:       0.5rem 1rem;
@@ -128,7 +121,6 @@ body, button, input, summary {
     border-top:    1px solid rgba(0,0,0,0.1);
   }
   
-  /* Confirmation dialog */
   .confirm-modal {
     display:       none;
     position:      fixed;
@@ -153,7 +145,6 @@ body, button, input, summary {
     margin-bottom: 1em;
   }
   
-  /* Reminder modal */
   .reminder-modal {
     display:       none;
     position:      fixed;
@@ -215,15 +206,12 @@ body, button, input, summary {
   box-shadow: 0 1px 4px rgba(0,0,0,0.2);
 }
 
-/* push button separation */
 #push {
   display: block;
-  margin: 1.5rem auto;  /* center and add vertical space */
+  margin: 1.5rem auto; 
 }
 
-/* --- Custom Checkboxes --- */
 #tableCheckboxContainer input[type="checkbox"] {
-  /* remove default */
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
@@ -259,20 +247,17 @@ body, button, input, summary {
   transform: rotate(45deg);
 }
 
-/* ensure label text aligns nicely */
 #tableCheckboxContainer label {
   vertical-align: middle;
   margin-right: 1rem;
   cursor: pointer;
 }
-  /* Other globals */
   b { font-weight: bold; }
 .tab.disabled {
     opacity: 0.5;
-    pointer-events: none;   /* blocks clicks */
+    pointer-events: none; 
     user-select: none;
   }
-  /* Container to keep input + button aligned */
 #panel-pull .single-pull {
   display: flex;
   align-items: center;
@@ -280,9 +265,8 @@ body, button, input, summary {
   margin: 1em 0;
 }
 
-/* Doc Code input */
 #docCodeInput {
-  flex: 1;                  /* take up remaining space */
+  flex: 1;                  
   padding: 0.5em 0.75em;
   font-family: inherit;
   font-size: 0.9em;
@@ -292,13 +276,12 @@ body, button, input, summary {
   transition: border-color 0.2s;
 }
 #docCodeInput:focus {
-  border-color: #4ba781;    /* accent on focus */
+  border-color: #4ba781;   
 }
 #panel-pull .single-pull #docCodeInput {
   flex: 1;
   max-width: 100px;
 }
-/* Pull One button */
 #pullOneBtn {
   padding: 0.5em 1em;
   font-family: inherit;
@@ -317,12 +300,11 @@ body, button, input, summary {
   background-color: #aaa;
   cursor: not-allowed;
 }
-/* Stack the fields with consistent spacing */
 #panel-connect .login-form {
   display: flex;
   flex-direction: column;
   gap: 0.75em;
-  max-width: 300px;    /* optional, to keep it from stretching too wide */
+  max-width: 300px;  
   margin: 1em 0;
 }
 
@@ -394,4 +376,22 @@ body, button, input, summary {
 .tooltip-container:hover .tooltip-text {
   visibility: visible;
   opacity: 0.95;
+}
+.hidden {
+  display: none;
+}
+.spinner {
+  border: 4px solid rgba(0,0,0,0.1);
+  border-top:   4px solid #0078d4;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  animation: spin 1s linear infinite;
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 8px;
+}
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
 }

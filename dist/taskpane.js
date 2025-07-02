@@ -4788,28 +4788,7 @@ async function pushToDb() {
       await ctx.sync();
       const [headerRow, ...dataRows] = used.values || [];
       const headerMap = headerRow.map(h => DISPLAY_TO_DB[h]);
-      // ————————— PRE-LOAD REAL URLS —————————
-      // find the “Download File” column (your display name → db name)
-      const hyperlinkColIdx = headerRow.indexOf(COLUMN_MAP.hyperlink);
-      let hyperlinkAddresses = [];
-
-      if (hyperlinkColIdx >= 0 && dataRows.length > 0) {
-        // load the hyperlink property on the entire column in one go
-        const linkRange = sheet.getRangeByIndexes(
-          /* row */    1,
-          /* col */    hyperlinkColIdx,
-          /* count */  dataRows.length,
-          /* width */  1
-        );
-        linkRange.load("hyperlink");
-        await ctx.sync();
-
-        // extract each cell’s URL (or blank if none)
-        for (let i = 0; i < dataRows.length; i++) {
-          const cell = linkRange.getCell(i, 0);
-          hyperlinkAddresses[i] = cell.hyperlink?.address || "";
-        }
-      }
+      
       // 2d) Build rows to push
       const toTablePush = [];
       const today = new Date();
@@ -4819,46 +4798,49 @@ async function pushToDb() {
         year: "numeric"
       }).format(today);
 
-      for (let rowIdx = 0; rowIdx < dataRows.length; rowIdx++) {
-        const row = dataRows[rowIdx];
-        const obj = {};
-        row.forEach((cellValue, colIdx) => {
-            const dbCol = headerMap[colIdx];
-            if (!dbCol || !dbCols.includes(dbCol)) return;
-  
-            if (dbCol === "hyperlink") {
-              // use the real URL, not the display text
-              obj.hyperlink = hyperlinkAddresses[rowIdx];
-            } else {
-              obj[dbCol] = cellValue;
-            }
-          });
-
-        if (tableName === "policies" && !obj.country && obj.doc_code) {
-          const iso3 = String(obj.doc_code).substring(0, 3).toUpperCase();
-          const grp = COUNTRY_GROUPINGS.find(g => g.iso3c === iso3);
-          if (grp) obj.country = grp.Country;
-        }
-
-        // Remove inherited fields on non-policy tables
-        if (tableName !== "policies") {
-          ["country", "policy_year", "policy_name", "policy_format"].forEach(k => delete obj[k]);
-        }
-
-        // Always update the push date
-        obj.date_entry = formattedToday;
-        if (!obj.doc_code) continue;
-
-        const orig = cacheMap.get(obj.doc_code);
-        const isChanged = !orig || Object.keys(obj).some(k =>
-          k !== "date_entry" &&
-          String(orig[k] ?? "") !== String(obj[k] ?? "")
-        );
-
-        if (isChanged) {
-          toTablePush.push(obj);
-        }
-      }
+            for (const row of dataRows) {
+                const obj     = {};
+                const docCode = String(row[ headerRow.indexOf(COLUMN_MAP.doc_code) ] || "").trim();
+                // pull the entire cache entry once
+                const cacheEntry = cacheMap.get(docCode) || {};
+        
+                // map each column value, but for hyperlink use the cached URL
+                row.forEach((cellValue, colIdx) => {
+                  const dbCol = headerMap[colIdx];
+                  if (!dbCol || !dbCols.includes(dbCol)) return;
+        
+                  if (dbCol === "hyperlink") {
+                    obj.hyperlink = cacheEntry.hyperlink || "";
+                  } else {
+                    obj[dbCol] = cellValue;
+                  }
+                });
+        
+                // your existing “default country” logic
+                if (tableName === "policies" && !obj.country && obj.doc_code) {
+                  const iso3 = obj.doc_code.substring(0,3).toUpperCase();
+                  const grp  = COUNTRY_GROUPINGS.find(g => g.iso3c === iso3);
+                  if (grp) obj.country = grp.Country;
+                }
+        
+                // inherited-field cleanup
+                if (tableName !== "policies") {
+                  ["country","policy_year","policy_name","policy_format"]
+                    .forEach(k => delete obj[k]);
+                }
+        
+                // always set push date
+                obj.date_entry = formattedToday;
+                if (!obj.doc_code) return;
+        
+                // detect changes by comparing against cacheEntry
+                const isChanged = Object.keys(obj).some(k =>
+                  k !== "date_entry" &&
+                  String(cacheEntry[k] ?? "") !== String(obj[k] ?? "")
+                );
+        
+                if (isChanged) toTablePush.push(obj);
+              }
 
       if (toTablePush.length) {
         toPush.push({ tableName, rows: toTablePush });

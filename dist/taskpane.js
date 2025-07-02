@@ -4788,21 +4788,27 @@ async function pushToDb() {
       await ctx.sync();
       const [headerRow, ...dataRows] = used.values || [];
       const headerMap = headerRow.map(h => DISPLAY_TO_DB[h]);
-            // PRE-LOAD HYPERLINK ADDRESSES
-      // find the “Download File” column index
+      // ————————— PRE-LOAD REAL URLS —————————
+      // find the “Download File” column (your display name → db name)
       const hyperlinkColIdx = headerRow.indexOf(COLUMN_MAP.hyperlink);
       let hyperlinkAddresses = [];
-      if (hyperlinkColIdx >= 0 && dataRows.length) {
-        // load the .hyperlink.address for each data row
-        const linkCells = [];
-        for (let i = 0; i < dataRows.length; i++) {
-          const cell = sheet.getRangeByIndexes(i + 1, hyperlinkColIdx, 1, 1);
-          cell.load("hyperlink");
-          linkCells.push(cell);
-        }
+
+      if (hyperlinkColIdx >= 0 && dataRows.length > 0) {
+        // load the hyperlink property on the entire column in one go
+        const linkRange = sheet.getRangeByIndexes(
+          /* row */    1,
+          /* col */    hyperlinkColIdx,
+          /* count */  dataRows.length,
+          /* width */  1
+        );
+        linkRange.load("hyperlink");
         await ctx.sync();
-        // extract the URL into a simple array
-        hyperlinkAddresses = linkCells.map(c => c.hyperlink.address || "");
+
+        // extract each cell’s URL (or blank if none)
+        for (let i = 0; i < dataRows.length; i++) {
+          const cell = linkRange.getCell(i, 0);
+          hyperlinkAddresses[i] = cell.hyperlink?.address || "";
+        }
       }
       // 2d) Build rows to push
       const toTablePush = [];

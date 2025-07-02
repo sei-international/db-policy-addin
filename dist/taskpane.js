@@ -3853,7 +3853,7 @@ const dropdowns = {
   ]
 };
 const apiBase = "https://dbpolicyaddin-d0d4fdehc5h8cpdh.northeurope-01.azurewebsites.net/api";
-
+let reminderTimer = null;
 const statusEl = document.getElementById("status");
 const COLUMN_MAP = {
   // policies
@@ -4055,11 +4055,14 @@ function hideReminderModal() {
 
 // schedule a reminder every intervalMs (defaults to 30 minutes)
 function scheduleReminder(intervalMs = 30 * 60 * 1000) {
-  setTimeout(function tick() {
+  if (reminderTimer) {
+    clearTimeout(reminderTimer);
+  }
+  reminderTimer = setTimeout(() => {
     showReminderModal();
-    setTimeout(tick, intervalMs);
   }, intervalMs);
 }
+
 function setupTabs() {
   ['connect','pull','faq'].forEach(tabKey => {
     const tabEl   = document.getElementById(`tab-${tabKey}`);
@@ -4879,7 +4882,7 @@ async function pushToDb() {
       const payload = await res.json();
       if (!res.ok) throw new Error(payload.error || JSON.stringify(payload));
       status.innerText = `✅ Pushed ${rows.length} to "${tableName}".`;
-
+      scheduleReminder();
       // Refresh cache for just this table
       await pullOneTable(tableName);
     } catch (err) {

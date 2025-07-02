@@ -4788,7 +4788,7 @@ async function pushToDb() {
       await ctx.sync();
       const [headerRow, ...dataRows] = used.values || [];
       const headerMap = headerRow.map(h => DISPLAY_TO_DB[h]);
-      
+
       // 2d) Build rows to push
       const toTablePush = [];
       const today = new Date();
@@ -4798,49 +4798,56 @@ async function pushToDb() {
         year: "numeric"
       }).format(today);
 
-            for (const row of dataRows) {
-                const obj     = {};
-                const docCode = String(row[ headerRow.indexOf(COLUMN_MAP.doc_code) ] || "").trim();
-                // pull the entire cache entry once
-                const cacheEntry = cacheMap.get(docCode) || {};
-        
-                // map each column value, but for hyperlink use the cached URL
-                row.forEach((cellValue, colIdx) => {
-                  const dbCol = headerMap[colIdx];
-                  if (!dbCol || !dbCols.includes(dbCol)) return;
-        
-                  if (dbCol === "hyperlink") {
-                    obj.hyperlink = cacheEntry.hyperlink || "";
-                  } else {
-                    obj[dbCol] = cellValue;
-                  }
-                });
-        
-                // your existing “default country” logic
-                if (tableName === "policies" && !obj.country && obj.doc_code) {
-                  const iso3 = obj.doc_code.substring(0,3).toUpperCase();
-                  const grp  = COUNTRY_GROUPINGS.find(g => g.iso3c === iso3);
-                  if (grp) obj.country = grp.Country;
-                }
-        
-                // inherited-field cleanup
-                if (tableName !== "policies") {
-                  ["country","policy_year","policy_name","policy_format"]
-                    .forEach(k => delete obj[k]);
-                }
-        
-                // always set push date
-                obj.date_entry = formattedToday;
-                if (!obj.doc_code) return;
-        
-                // detect changes by comparing against cacheEntry
-                const isChanged = Object.keys(obj).some(k =>
-                  k !== "date_entry" &&
-                  String(cacheEntry[k] ?? "") !== String(obj[k] ?? "")
-                );
-        
-                if (isChanged) toTablePush.push(obj);
-              }
+      for (const row of dataRows) {
+        const obj     = {};
+
+        // get this row’s doc_code so we can look up the original hyperlink
+        const codeIdx     = headerRow.indexOf(COLUMN_MAP.doc_code);
+        const docCode     = String(row[codeIdx] || "").trim();
+        const cacheEntry  = cacheMap.get(docCode) || {};
+      
+        row.forEach((cellValue, colIdx) => {
+          const dbCol = headerMap[colIdx];
+          if (!dbCol || !dbCols.includes(dbCol)) return;
+      
+          if (dbCol === "hyperlink") {
+            // only overwrite if the user actually typed/pasted a valid URL (or cleared it)
+            if (typeof cellValue === "string" && (cellValue.startsWith("http") || cellValue === "")) {
+              obj.hyperlink = cellValue;
+            } else if (cacheEntry.hyperlink) {
+              // otherwise keep the old URL from cache
+              obj.hyperlink = cacheEntry.hyperlink;
+            }
+          } else {
+            obj[dbCol] = cellValue;
+          }
+        });
+
+        if (tableName === "policies" && !obj.country && obj.doc_code) {
+          const iso3 = String(obj.doc_code).substring(0, 3).toUpperCase();
+          const grp = COUNTRY_GROUPINGS.find(g => g.iso3c === iso3);
+          if (grp) obj.country = grp.Country;
+        }
+
+        // Remove inherited fields on non-policy tables
+        if (tableName !== "policies") {
+          ["country", "policy_year", "policy_name", "policy_format"].forEach(k => delete obj[k]);
+        }
+
+        // Always update the push date
+        obj.date_entry = formattedToday;
+        if (!obj.doc_code) continue;
+
+        const orig = cacheMap.get(obj.doc_code);
+        const isChanged = !orig || Object.keys(obj).some(k =>
+          k !== "date_entry" &&
+          String(orig[k] ?? "") !== String(obj[k] ?? "")
+        );
+
+        if (isChanged) {
+          toTablePush.push(obj);
+        }
+      }
 
       if (toTablePush.length) {
         toPush.push({ tableName, rows: toTablePush });

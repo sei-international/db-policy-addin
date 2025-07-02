@@ -4788,7 +4788,22 @@ async function pushToDb() {
       await ctx.sync();
       const [headerRow, ...dataRows] = used.values || [];
       const headerMap = headerRow.map(h => DISPLAY_TO_DB[h]);
-
+            // PRE-LOAD HYPERLINK ADDRESSES
+      // find the “Download File” column index
+      const hyperlinkColIdx = headerRow.indexOf(COLUMN_MAP.hyperlink);
+      let hyperlinkAddresses = [];
+      if (hyperlinkColIdx >= 0 && dataRows.length) {
+        // load the .hyperlink.address for each data row
+        const linkCells = [];
+        for (let i = 0; i < dataRows.length; i++) {
+          const cell = sheet.getRangeByIndexes(i + 1, hyperlinkColIdx, 1, 1);
+          cell.load("hyperlink");
+          linkCells.push(cell);
+        }
+        await ctx.sync();
+        // extract the URL into a simple array
+        hyperlinkAddresses = linkCells.map(c => c.hyperlink.address || "");
+      }
       // 2d) Build rows to push
       const toTablePush = [];
       const today = new Date();
@@ -4798,14 +4813,20 @@ async function pushToDb() {
         year: "numeric"
       }).format(today);
 
-      for (const row of dataRows) {
+      for (let rowIdx = 0; rowIdx < dataRows.length; rowIdx++) {
+        const row = dataRows[rowIdx];
         const obj = {};
-        row.forEach((cell, i) => {
-          const dbCol = headerMap[i];
-          if (dbCol && dbCols.includes(dbCol)) {
-            obj[dbCol] = cell;
-          }
-        });
+        row.forEach((cellValue, colIdx) => {
+            const dbCol = headerMap[colIdx];
+            if (!dbCol || !dbCols.includes(dbCol)) return;
+  
+            if (dbCol === "hyperlink") {
+              // use the real URL, not the display text
+              obj.hyperlink = hyperlinkAddresses[rowIdx];
+            } else {
+              obj[dbCol] = cellValue;
+            }
+          });
 
         if (tableName === "policies" && !obj.country && obj.doc_code) {
           const iso3 = String(obj.doc_code).substring(0, 3).toUpperCase();

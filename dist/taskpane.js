@@ -4787,7 +4787,7 @@ async function pushToDb() {
       used.load("values");
       await ctx.sync();
       const [headerRow, ...dataRows] = used.values || [];
-      const headerMap = headerRow.map(h => DISPLAY_TO_DB[h]);
+      const headerMap = headerRow.map(h => DISPLAY_TO_DB[h] || h);
 
       // 2d) Build rows to push
       const toTablePush = [];

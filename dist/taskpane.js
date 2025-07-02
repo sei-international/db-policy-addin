@@ -4808,6 +4808,7 @@ async function pushToDb() {
       
         row.forEach((cellValue, colIdx) => {
           const dbCol = headerMap[colIdx];
+          if (dbCol === "hyperlink" && tableName !== "policies") return;
           if (!dbCol || !dbCols.includes(dbCol)) return;
       
           if (dbCol === "hyperlink") {

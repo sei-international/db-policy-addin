@@ -4514,15 +4514,24 @@ async function pullFromDb() {
               /* colCount  */ 1
             );
         
+            // make sure blanks are allowed
+            dvRange.dataValidation.ignoreBlanks = true;
+        
             if (colName === "Country") {
-              // hard-code Column B on Country Groupings
-              const cgSheet = ctx.workbook.worksheets.getItem("Country Groupings");
-              const cgUsed  = cgSheet.getUsedRange();
+              // pull the country list as B2:B{lastRow} from Country Groupings
+              const cg = ctx.workbook.worksheets.getItem("Country Groupings");
+              const cgUsed = cg.getUsedRange();
               cgUsed.load("rowCount");
               await ctx.sync();
         
-              const lastRow = cgUsed.rowCount;
-              const src     = `='Country Groupings'!$B$2:$B${lastRow}`;
+              const last = cgUsed.rowCount;
+              if (last < 2) {
+                // nothing to validate against if they only have headers
+                idx++;
+                continue;
+              }
+        
+              const src = `'Country Groupings'!$B$2:$B$${last}`;
         
               dvRange.dataValidation.rule = {
                 list: { inCellDropdown: true, source: src }

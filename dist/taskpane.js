@@ -4491,50 +4491,67 @@ async function pullFromDb() {
 
         // Add dropdowns
         await Excel.run(async ctx => {
-          const sheet     = ctx.workbook.worksheets.getActiveWorksheet();
-          const used      = sheet.getUsedRange();
+          const sheet = ctx.workbook.worksheets.getActiveWorksheet();
+          const used  = sheet.getUsedRange();
           used.load("rowCount,columnCount");
           await ctx.sync();
         
-          // grab headers
-          const headerRange = sheet.getRangeByIndexes(0, 0, 1, used.columnCount);
-          headerRange.load("values");
+          // read header row
+          const headerR = sheet.getRangeByIndexes(0, 0, 1, used.columnCount);
+          headerR.load("values");
           await ctx.sync();
-          const headers = headerRange.values[0];
+          const headers = headerR.values[0];
+        
+          // helper to convert 1-based column index to letter(s)
+          function colLetter(n) {
+            let s = "";
+            while (n > 0) {
+              const m = (n - 1) % 26;
+              s = String.fromCharCode(65 + m) + s;
+              n = Math.floor((n - 1) / 26);
+            }
+            return s;
+          }
         
           let idx = 0;
           for (const [colName, options] of Object.entries(dropdowns)) {
-            const colIndex = headers.indexOf(colName);
-            if (colIndex < 0 || used.rowCount < 2) { idx++; continue; }
+            const cIdx = headers.indexOf(colName);
+            if (cIdx < 0 || used.rowCount < 2) { idx++; continue; }
         
             const dvRange = sheet.getRangeByIndexes(
-              1,               // from row 2
-              colIndex,        // this column
-              used.rowCount-1, // down to last row
-              1
+              /* startRow  */ 1,
+              /* startCol  */ cIdx,
+              /* rowCount  */ used.rowCount - 1,
+              /* colCount  */ 1
             );
         
             if (colName === "Country") {
-              // ▶ point at the Country column of your Country Groupings table
+              // — pull the country list as an A1 range from Country Groupings
+              const cg = ctx.workbook.worksheets.getItem("Country Groupings");
+              const cgUsed = cg.getUsedRange();
+              cgUsed.load("rowCount, values");
+              await ctx.sync();
+        
+              const cgHeaders = cgUsed.values[0];
+              const countryCol = cgHeaders.indexOf("Country");
+              if (countryCol < 0) throw new Error("No “Country” column on Country Groupings");
+              const last = cgUsed.rowCount;
+              const letter = colLetter(countryCol + 1);
+              const src = `='Country Groupings'!$${letter}$2:$${letter}$${last}`;
+        
               dvRange.dataValidation.rule = {
-                list: {
-                  inCellDropdown: true,
-                  source: "=tbl_CountryGroupings[Country]"
-                }
+                list: { inCellDropdown: true, source: src }
               };
-            } else {
-              // ▶ inline if ≤255 chars, otherwise Lists sheet
+            }
+            else {
+              // — inline if small, otherwise Lists sheet
               const joined = options.join(",");
-              let source;
+              let src;
               if (joined.length <= 255) {
-                source = joined; 
-              } else {
-                // assume your Lists sheet has one column per dropdown, A through …
-                const letter = String.fromCharCode(65 + idx);
-                source = "='Lists'!" + `$${letter}$2:$${letter}$${options.length+1}`;
-              }
+                src = joined;
+              } 
               dvRange.dataValidation.rule = {
-                list: { inCellDropdown: true, source }
+                list: { inCellDropdown: true, source: src }
               };
             }
         
@@ -4543,6 +4560,7 @@ async function pullFromDb() {
         
           await ctx.sync();
         });
+        
         
 
         // Autofit layout

@@ -4502,17 +4502,6 @@ async function pullFromDb() {
           await ctx.sync();
           const headers = headerR.values[0];
         
-          // helper to convert 1-based column index to letter(s)
-          function colLetter(n) {
-            let s = "";
-            while (n > 0) {
-              const m = (n - 1) % 26;
-              s = String.fromCharCode(65 + m) + s;
-              n = Math.floor((n - 1) / 26);
-            }
-            return s;
-          }
-        
           let idx = 0;
           for (const [colName, options] of Object.entries(dropdowns)) {
             const cIdx = headers.indexOf(colName);
@@ -4526,30 +4515,23 @@ async function pullFromDb() {
             );
         
             if (colName === "Country") {
-              // — pull the country list as an A1 range from Country Groupings
-              const cg = ctx.workbook.worksheets.getItem("Country Groupings");
-              const cgUsed = cg.getUsedRange();
-              cgUsed.load("rowCount, values");
+              // hard-code Column B on Country Groupings
+              const cgSheet = ctx.workbook.worksheets.getItem("Country Groupings");
+              const cgUsed  = cgSheet.getUsedRange();
+              cgUsed.load("rowCount");
               await ctx.sync();
         
-              const cgHeaders = cgUsed.values[0];
-              const countryCol = cgHeaders.indexOf("Country");
-              if (countryCol < 0) throw new Error("No “Country” column on Country Groupings");
-              const last = cgUsed.rowCount;
-              const letter = colLetter(countryCol + 1);
-              const src = `='Country Groupings'!$${letter}$2:$${letter}$${last}`;
+              const lastRow = cgUsed.rowCount;
+              const src     = `='Country Groupings'!$B$2:$B${lastRow}`;
         
               dvRange.dataValidation.rule = {
                 list: { inCellDropdown: true, source: src }
               };
             }
             else {
-              // — inline if small, otherwise Lists sheet
+              // inline if small, otherwise Lists sheet
               const joined = options.join(",");
-              let src;
-              if (joined.length <= 255) {
-                src = joined;
-              } 
+              let src = joined;
               dvRange.dataValidation.rule = {
                 list: { inCellDropdown: true, source: src }
               };
@@ -4560,6 +4542,7 @@ async function pullFromDb() {
         
           await ctx.sync();
         });
+        
         
         
 

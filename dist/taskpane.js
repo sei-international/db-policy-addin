@@ -4491,43 +4491,67 @@ async function pullFromDb() {
 
         // Add dropdowns
         await Excel.run(async ctx => {
-          const dropdownSheetName = "Lists";
           const sheet = ctx.workbook.worksheets.getActiveWorksheet();
-          const used = sheet.getUsedRange();
+          const used  = sheet.getUsedRange();
           used.load("rowCount,columnCount");
           await ctx.sync();
-
+        
+          // Read header row
           const headerRange = sheet.getRangeByIndexes(0, 0, 1, used.columnCount);
           headerRange.load("values");
           await ctx.sync();
           const headers = headerRange.values[0];
-
-          Object.entries(dropdowns).forEach(([colName, options], idx) => {
+        
+          // Loop through each dropdown definition
+          let idx = 0;
+          for (const [colName, options] of Object.entries(dropdowns)) {
             const colIndex = headers.indexOf(colName);
-            if (colIndex < 0 || used.rowCount < 2) return;
-
-            let source;
-            const joined = options.join(",");
-            if (joined.length <= 255) {
-              source = joined;
-            } else {
-              const letter = String.fromCharCode(65 + idx);
-              source = `='${dropdownSheetName}'!$${letter}$2:$${letter}$${options.length + 1}`;
+            if (colIndex < 0 || used.rowCount < 2) {
+              idx++;
+              continue;
             }
-
+        
             const dvRange = sheet.getRangeByIndexes(
-              1, colIndex, used.rowCount - 1, 1
+              1,               // start on second row
+              colIndex,        // this column
+              used.rowCount-1, // through last row
+              1
             );
-            dvRange.dataValidation.rule = {
-              list: {
-                inCellDropdown: true,
-                source: source
-              }
-            };
-          });
-
+        
+            if (colName === "Country") {
+              // Special case: source list comes from the "Country Groupings" sheet
+              const cgSheet = ctx.workbook.worksheets.getItem("Country Groupings");
+              const cgUsed  = cgSheet.getUsedRange();
+              cgUsed.load("rowCount, values");
+              await ctx.sync();
+        
+              const cgHeaders    = cgUsed.values[0];
+              const countryIndex = cgHeaders.indexOf("Country");
+              const lastRow      = cgUsed.rowCount;
+              const colLetter    = String.fromCharCode(65 + countryIndex);
+              const source       = `'Country Groupings'!$${colLetter}$2:$${colLetter}$${lastRow}`;
+        
+              dvRange.dataValidation.rule = {
+                list: { inCellDropdown: true, source }
+              };
+            } else {
+              // Default: inline list or Lists sheet reference
+              const joined = options.join(",");
+              let source;
+              if (joined.length <= 255) {
+                source = joined;
+              } 
+              dvRange.dataValidation.rule = {
+                list: { inCellDropdown: true, source }
+              };
+            }
+        
+            idx++;
+          }
+        
           await ctx.sync();
         });
+        
 
         // Autofit layout
         sheet.getUsedRange().getEntireColumn().format.columnWidth = 130;

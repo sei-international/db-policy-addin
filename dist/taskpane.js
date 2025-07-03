@@ -4492,68 +4492,44 @@ async function pullFromDb() {
         // Add dropdowns
         await Excel.run(async ctx => {
           const sheet = ctx.workbook.worksheets.getActiveWorksheet();
-          const used  = sheet.getUsedRange();
+          const used = sheet.getUsedRange();
           used.load("rowCount,columnCount");
           await ctx.sync();
-        
-          // read header row
-          const headerR = sheet.getRangeByIndexes(0, 0, 1, used.columnCount);
-          headerR.load("values");
+
+          const headerRange = sheet.getRangeByIndexes(0, 0, 1, used.columnCount);
+          headerRange.load("values");
           await ctx.sync();
-          const headers = headerR.values[0];
-        
-          let idx = 0;
+          const headers = headerRange.values[0];
           for (const [colName, options] of Object.entries(dropdowns)) {
-            const cIdx = headers.indexOf(colName);
-            if (cIdx < 0 || used.rowCount < 2) { idx++; continue; }
-        
-            const dvRange = sheet.getRangeByIndexes(
-              /* startRow  */ 1,
-              /* startCol  */ cIdx,
-              /* rowCount  */ used.rowCount - 1,
-              /* colCount  */ 1
-            );
-        
-            // make sure blanks are allowed
-            dvRange.dataValidation.ignoreBlanks = true;
-        
-            if (colName === "Country") {
-              // pull the country list as B2:B{lastRow} from Country Groupings
-              const cg = ctx.workbook.worksheets.getItem("Country Groupings");
-              const cgUsed = cg.getUsedRange();
-              cgUsed.load("rowCount");
-              await ctx.sync();
-        
-              const last = cgUsed.rowCount;
-              if (last < 2) {
-                // nothing to validate against if they only have headers
-                idx++;
-                continue;
+              const cIdx = headers.indexOf(colName);
+              if (cIdx < 0 || used.rowCount < 2) continue;
+  
+              const dvRange = sheet.getRangeByIndexes(1, cIdx, used.rowCount - 1, 1);
+              dvRange.dataValidation.ignoreBlanks = true;
+  
+              let src;
+              if (colName === "Country") {
+                const cg = ctx.workbook.worksheets.getItem("Country Groupings");
+                const cgUsed = cg.getUsedRange();
+                cgUsed.load("rowCount");
+                await ctx.sync();
+                src = `'Country Groupings'!$B$2:$B$${cgUsed.rowCount}`;
+              } else {
+                const joined = options.join(",");
+                if (joined.length > 255) {
+                  console.warn(`Dropdown for "${colName}" exceeds 255 chars and will truncate.`);
+                }
+                src = joined;
               }
-        
-              const src = `'Country Groupings'!$B$2:$B$${last}`;
-        
+  
               dvRange.dataValidation.rule = {
                 list: { inCellDropdown: true, source: src }
               };
             }
-            else {
-              // inline if small, otherwise Lists sheet
-              const joined = options.join(",");
-              let src = joined;
-              dvRange.dataValidation.rule = {
-                list: { inCellDropdown: true, source: src }
-              };
-            }
-        
-            idx++;
-          }
-        
+
+
           await ctx.sync();
         });
-        
-        
-        
 
         // Autofit layout
         sheet.getUsedRange().getEntireColumn().format.columnWidth = 130;
@@ -4688,7 +4664,7 @@ async function pullOneTable(tableName) {
 
     // Add dropdowns
     await Excel.run(async ctx => {
-      const dropdownSheetName = "Country Groupings";
+      const dropdownSheetName = "Lists";
       const sheet = ctx.workbook.worksheets.getActiveWorksheet();
       const used = sheet.getUsedRange();
       used.load("rowCount,columnCount");
@@ -4699,28 +4675,32 @@ async function pullOneTable(tableName) {
       await ctx.sync();
       const headers = headerRange.values[0];
 
-      Object.entries(dropdowns).forEach(([colName, options], idx) => {
-        const colIndex = headers.indexOf(colName);
-        if (colIndex < 0 || used.rowCount < 2) return;
-
-        let source;
-        const joined = options.join(",");
-
-        if (joined.length <= 255) {
-          source = joined;
-        } else {
-          const letter = String.fromCharCode(65 + idx);
-          source = `='${dropdownSheetName}'!$${letter}$2:$${letter}$${options.length + 1}`;
-        }
-
-        const dvRange = sheet.getRangeByIndexes(1, colIndex, used.rowCount - 1, 1);
-        dvRange.dataValidation.rule = {
-          list: {
-            inCellDropdown: true,
-            source: source
+      for (const [colName, options] of Object.entries(dropdowns)) {
+          const cIdx = headers.indexOf(colName);
+          if (cIdx < 0 || used.rowCount < 2) continue;
+  
+          const dvRange = sheet.getRangeByIndexes(1, cIdx, used.rowCount - 1, 1);
+          dvRange.dataValidation.ignoreBlanks = true;
+  
+          let src;
+          if (colName === "Country") {
+            const cg = ctx.workbook.worksheets.getItem("Country Groupings");
+            const cgUsed = cg.getUsedRange();
+            cgUsed.load("rowCount");
+            await ctx.sync();
+            src = `'Country Groupings'!$B$2:$B$${cgUsed.rowCount}`;
+          } else {
+            const joined = options.join(",");
+            if (joined.length > 255) {
+              console.warn(`Dropdown for "${colName}" exceeds 255 chars and will truncate.`);
+            }
+            src = joined;
           }
-        };
-      });
+  
+          dvRange.dataValidation.rule = {
+            list: { inCellDropdown: true, source: src }
+          };
+        }
 
       await ctx.sync();
     });

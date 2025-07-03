@@ -4696,7 +4696,7 @@ async function pullOneTable(tableName) {
 
     // Add dropdowns
     await Excel.run(async ctx => {
-      const dropdownSheetName = "Lists";
+      const dropdownSheetName = "Country Groupings";
       const sheet = ctx.workbook.worksheets.getActiveWorksheet();
       const used = sheet.getUsedRange();
       used.load("rowCount,columnCount");

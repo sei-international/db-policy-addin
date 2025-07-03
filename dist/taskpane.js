@@ -4491,56 +4491,48 @@ async function pullFromDb() {
 
         // Add dropdowns
         await Excel.run(async ctx => {
-          const sheet = ctx.workbook.worksheets.getActiveWorksheet();
-          const used  = sheet.getUsedRange();
+          const sheet     = ctx.workbook.worksheets.getActiveWorksheet();
+          const used      = sheet.getUsedRange();
           used.load("rowCount,columnCount");
           await ctx.sync();
         
-          // Read header row
+          // grab headers
           const headerRange = sheet.getRangeByIndexes(0, 0, 1, used.columnCount);
           headerRange.load("values");
           await ctx.sync();
           const headers = headerRange.values[0];
         
-          // Loop through each dropdown definition
           let idx = 0;
           for (const [colName, options] of Object.entries(dropdowns)) {
             const colIndex = headers.indexOf(colName);
-            if (colIndex < 0 || used.rowCount < 2) {
-              idx++;
-              continue;
-            }
+            if (colIndex < 0 || used.rowCount < 2) { idx++; continue; }
         
             const dvRange = sheet.getRangeByIndexes(
-              1,               // start on second row
+              1,               // from row 2
               colIndex,        // this column
-              used.rowCount-1, // through last row
+              used.rowCount-1, // down to last row
               1
             );
         
             if (colName === "Country") {
-              // Special case: source list comes from the "Country Groupings" sheet
-              const cgSheet = ctx.workbook.worksheets.getItem("Country Groupings");
-              const cgUsed  = cgSheet.getUsedRange();
-              cgUsed.load("rowCount, values");
-              await ctx.sync();
-        
-              const cgHeaders    = cgUsed.values[0];
-              const countryIndex = cgHeaders.indexOf("Country");
-              const lastRow      = cgUsed.rowCount;
-              const colLetter    = String.fromCharCode(65 + countryIndex);
-              const source       = `'Country Groupings'!$${colLetter}$2:$${colLetter}$${lastRow}`;
-        
+              // ▶ point at the Country column of your Country Groupings table
               dvRange.dataValidation.rule = {
-                list: { inCellDropdown: true, source }
+                list: {
+                  inCellDropdown: true,
+                  source: "=tbl_CountryGroupings[Country]"
+                }
               };
             } else {
-              // Default: inline list or Lists sheet reference
+              // ▶ inline if ≤255 chars, otherwise Lists sheet
               const joined = options.join(",");
               let source;
               if (joined.length <= 255) {
-                source = joined;
-              } 
+                source = joined; 
+              } else {
+                // assume your Lists sheet has one column per dropdown, A through …
+                const letter = String.fromCharCode(65 + idx);
+                source = "='Lists'!" + `$${letter}$2:$${letter}$${options.length+1}`;
+              }
               dvRange.dataValidation.rule = {
                 list: { inCellDropdown: true, source }
               };

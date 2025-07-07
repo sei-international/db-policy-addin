@@ -4847,9 +4847,9 @@ async function pushToDb() {
 
     if (dupesAgainstSheet.length) {
       const list = [...new Set(dupesAgainstSheet)].join(", ");
-      alert(
-        `🚫 You’re about to push ${dupesAgainstSheet.length} row(s) to "${tableName}" whose\` +
-        \` doc_code already exists:\n\n${list}\n\n` +
+      await showMessage(
+        `🚫 You’re about to push ${dupesAgainstSheet.length} row(s) to “${tableName}”\n` +
+        `whose doc_code already exists:\n\n${list}\n\n` +
         `Please fix or remove those before pushing.`
       );
       return; // abort the entire push
@@ -4887,7 +4887,34 @@ async function pushToDb() {
 function confirmPush(msg) {
   return askConfirm(`Push ${msg}`);
 }
+function showMessage(message) {
+  return new Promise(resolve => {
+    const dlg    = document.getElementById("confirmDialog");
+    const msgEl  = document.getElementById("confirmMessage");
+    const okBtn  = document.getElementById("confirmYes");
+    const noBtn  = document.getElementById("confirmNo");
 
+    // Configure dialog
+    msgEl.textContent      = message;
+    okBtn.textContent      = "OK";
+    noBtn.style.display    = "none";   // hide the No button
+    dlg.style.display      = "flex";   // show the overlay
+
+    // Handler
+    function cleanUp() {
+      dlg.style.display    = "none";
+      okBtn.textContent    = "Yes";
+      noBtn.style.display  = "";       // restore for future confirm calls
+      okBtn.removeEventListener("click", onOk);
+    }
+    function onOk() {
+      cleanUp();
+      resolve();
+    }
+
+    okBtn.addEventListener("click", onOk);
+  });
+}
 
 function askConfirm(message) {
   return new Promise(resolve => {

@@ -4122,76 +4122,66 @@ async function pullCountryGroupings() {
 }
 async function setupCountryListName() {
   await Excel.run(async ctx => {
-    const cgSheet = ctx.workbook.worksheets.getItem("Country Groupings");
-    // figure out how many rows
-    const used = cgSheet.getUsedRange();
+    const cg = ctx.workbook.worksheets.getItem("Country Groupings");
+    const used = cg.getUsedRange();
     used.load("rowCount");
     await ctx.sync();
-    const lastRow = used.rowCount;
 
-    // define B2:B{lastRow}
-    const listRng = cgSheet.getRange(`B2:B${lastRow}`);
-
+    const listRng = cg.getRange(`B2:B${used.rowCount}`);
+    // if there’s already a name, delete it
     const existing = ctx.workbook.names.getItemOrNullObject("CountryList");
     await ctx.sync();
     if (!existing.isNullObject) {
       existing.delete();
       await ctx.sync();
     }
-
+    // add the new named range
     ctx.workbook.names.add("CountryList", listRng);
     await ctx.sync();
   });
 }
 
-async function applyCountryValidation(sheetName) {
+
+async function applyCountryDropdown(sheetName) {
   await Excel.run(async ctx => {
     const sheet = ctx.workbook.worksheets.getItem(sheetName);
 
-    // 1) grab how many rows & find the Country column
+    // 1) figure out how many rows & find the Country column
     const used = sheet.getUsedRange();
     used.load("rowCount,columnCount");
     await ctx.sync();
-    if (used.rowCount < 2) return;
 
-    const hdr = sheet.getRangeByIndexes(0, 0, 1, used.columnCount);
-    hdr.load("values");
+    const headerR = sheet.getRangeByIndexes(0,0,1,used.columnCount);
+    headerR.load("values");
     await ctx.sync();
-    const colIdx = hdr.values[0].indexOf("Country");
-    if (colIdx < 0) return;
+    const headers = headerR.values[0];
+    const colIdx = headers.indexOf("Country");
+    if (colIdx < 0 || used.rowCount < 2) return;
 
-    // 2) build the target cells to validate (all rows under that header)
-    const dvRange = sheet.getRangeByIndexes(1, colIdx, used.rowCount - 1, 1);
+    // 2) get the body of that column
+    const dvRange = sheet.getRangeByIndexes(1, colIdx, used.rowCount-1, 1);
 
-    // 3) pull the Country‐column from Groupings table by Range
-    const cgTable = ctx.workbook.tables.getItem("tbl_CountryGroupings");
-    const countryListRange = cgTable.columns
-      .getItem("Country")
-      .getDataBodyRange();
-    // must sync so Excel actually knows its address
-    await ctx.sync();
-
-    // 4) assign validation rule to that Range object
+    // 3) assign a simple LIST rule pointing at our named range
     dvRange.dataValidation.rule = {
       list: {
         inCellDropdown: true,
-        source: countryListRange
+        source: "=CountryList"      // note the leading =
       }
     };
 
-    // 5) ignore empty cells, but block anything else with an error dialog
+    // 4) turn off the error‐alert so it won’t block invalid entries
     dvRange.dataValidation.ignoreBlanks = true;
-
     dvRange.dataValidation.errorAlert = {
-      showAlert: true,
-      style:     Excel.DataValidationAlertStyle.stop,
-      title:     "Invalid country",
-      message:   "Please select a country from the list."
+      showAlert: false,
+      title:   "",
+      message: "",
+      style:   Excel.DataValidationAlertStyle.stop
     };
 
     await ctx.sync();
   });
 }
+
 
 async function authFetch(url, opts = {}) {
   const token = await getToken().catch(err => {
@@ -4630,7 +4620,7 @@ async function pullFromDb() {
 
         await ctx.sync();
         await setupCountryListName();
-        await applyCountryValidation(displayName);
+        await applyCountryDropdown(displayName);
       });
 
       status.innerText = "Adding Country Groupings sheet…";
@@ -4804,7 +4794,7 @@ async function pullOneTable(tableName) {
     await ctx.sync();
     // enforce Country-only dropdown
     await setupCountryListName();
-    await applyCountryValidation(displayName);
+    await applyCountryDropdown(displayName);
   });
 
   return rows.length;

@@ -3800,56 +3800,6 @@ const dropdowns = {
     "Electricity/Energy Planning Document",
     "Guidelines",
     "other"
-  ],
-
-  "Country": [
-    "World","Africa","Algeria","Angola","Benin","Botswana","Bouvet Island",
-    "Br Ind Oc Terr","Burkina Faso","Burundi","Cabo Verde","Cameroon",
-    "Cent Afr Rep","Chad","Comoros","Congo DR","Cote d Ivoire","Djibouti",
-    "Egypt","Eq Guinea","Eritrea","Eswatini","Ethiopia","Fr Sth Territories",
-    "Gabon","Gambia","Ghana","Guinea","Guinea Bissau","Heard McDonald",
-    "Kenya","Lesotho","Liberia","Libya","Madagascar","Malawi","Mali",
-    "Mauritania","Mauritius","Mayotte","Morocco","Mozambique","Namibia",
-    "Niger","Nigeria","Reunion","Rwanda","Saint Helena","Sao Tome Prn",
-    "Senegal","Seychelles","Sierra Leone","Somalia","South Africa",
-    "South Sudan","Sudan","Tanzania","Togo","Tunisia","Uganda",
-    "Westn Sahara","Zambia","Zimbabwe","Other Africa","Asia",
-    "Afghanistan","Bangladesh","Bhutan","Brunei Darussalam","Cambodia",
-    "China","China HK SAR","China Mac SAR","Chinese Taipei","India",
-    "Indonesia","Japan","Kazakhstan","Korea DPR","Korea Rep","Kyrgyzstan",
-    "Lao PDR","Malaysia","Maldives","Mongolia","Myanmar","Nepal",
-    "Pakistan","Philippines","Singapore","Sri Lanka","Tajikistan",
-    "Thailand","Timor Leste","Turkmenistan","Uzbekistan","Viet Nam",
-    "Other Asia","C America + Carib","Anguilla","Antigua Barb","Aruba",
-    "Bahamas","Barbados","Belize","BES Islands","Br Virgin Is","Cayman Is",
-    "Costa Rica","Cuba","Curacao","Dominica","Dominican Rep","El Salvador",
-    "Grenada","Guadeloupe","Guatemala","Haiti","Honduras","Jamaica",
-    "Martinique","Montserrat","Nicaragua","Panama","Puerto Rico","St Barth",
-    "St Kitts Nevis","St Lucia","St Maarten","St Martin","St Vincent Gren",
-    "Trinidad Tobago","Turks Caicos","US Virgin Is","Other Cent Am Carib",
-    "Eurasia","Armenia","Azerbaijan","Georgia","Russian Fed","Turkey",
-    "Other Eurasia","Europe","Aland Islands","Albania","Andorra","Austria",
-    "Belarus","Belgium","Bosnia Herzg","Bulgaria","Channel Islands","Croatia",
-    "Cyprus","Czechia","Denmark","Estonia","Faroe Islands","Finland","France",
-    "North Macedonia","Germany","Gibraltar","Greece","Guernsey","Holy See",
-    "Hungary","Iceland","Ireland","Isle of Man","Italy","Jersey","Kosovo",
-    "Latvia","Liechtenstein","Lithuania","Luxembourg","Malta","Moldova Rep",
-    "Monaco","Montenegro","Netherlands","Norway","Poland","Portugal",
-    "Romania","San Marino","Sark","Serbia","Slovakia","Slovenia","Spain",
-    "Svalbard Mayen","Sweden","Switzerland","United Kingdom","Ukraine",
-    "Other Europe","EU (28)","Middle East","Bahrain","Iran (Islamic Republic of)",
-    "Iraq","Israel","Jordan","Kuwait","Lebanon","Oman","Palestine","Qatar",
-    "Saudi Arabia","Syrian AR","United Arab Em","Yemen","Other Mid East",
-    "N America","Bermuda","Canada","Greenland","Mexico","St Pierre Mq",
-    "USA","Other North Am","Oceania","Amer Samoa","Australia","Christmas Is",
-    "Cocos Is","Cook Islands","Fiji","Fr Polynesia","Guam","Kiribati",
-    "Marshall Is","Micronesia","Nauru","New Caledon","New Zealand","Niue",
-    "Norfolk Is","Nth Mariana Is","Palau","Papua N Guin","Pitcairn","Samoa",
-    "Solomon Is","Tokelau","Tonga","Tuvalu","US Minor Is","Vanuatu",
-    "Wallis Fut Is","Other Oceania","S America","Argentina","Bolivia",
-    "Brazil","Chile","Colombia","Ecuador","Falklands Malv","Fr Guiana",
-    "Guyana","Paraguay","Peru","South Georgia","Suriname","Uruguay",
-    "Venezuela","Other South Am","Antarctica","Multilateral"
   ]
 };
 const apiBase = "https://dbpolicyaddin-d0d4fdehc5h8cpdh.northeurope-01.azurewebsites.net/api";
@@ -4120,117 +4070,6 @@ async function pullCountryGroupings() {
     await ctx.sync();
   });
 }
-async function setupCountryListName() {
-  console.log("[setupCountryListName] start");
-  await Excel.run(async ctx => {
-    const cg = ctx.workbook.worksheets.getItem("Country Groupings");
-    const used = cg.getUsedRange();
-    used.load("rowCount");
-    await ctx.sync();
-
-    const listRangeAddr = `B2:B${used.rowCount}`;
-    console.log(`[setupCountryListName] defining list from ${listRangeAddr}`);
-
-    // delete old name if it exists
-    const old = ctx.workbook.names.getItemOrNullObject("CountryList");
-    await ctx.sync();
-    if (!old.isNullObject) {
-      console.log("[setupCountryListName] deleting existing CountryList name");
-      old.delete();
-      await ctx.sync();
-    }
-
-    // add new one
-    ctx.workbook.names.add("CountryList", cg.getRange(listRangeAddr));
-    await ctx.sync();
-    console.log("[setupCountryListName] CountryList name created");
-  });
-  console.log("[setupCountryListName] done");
-}
-
-
-
-async function setupCountryListName() {
-  console.log("[setupCountryListName] start");
-  await Excel.run(async ctx => {
-    const cg = ctx.workbook.worksheets.getItem("Country Groupings");
-    const used = cg.getUsedRange();
-    used.load("rowCount");
-    await ctx.sync();
-
-    const listRangeAddr = `B2:B${used.rowCount}`;
-    console.log(`[setupCountryListName] defining list from ${listRangeAddr}`);
-
-    // delete old name if it exists
-    const old = ctx.workbook.names.getItemOrNullObject("CountryList");
-    await ctx.sync();
-    if (!old.isNullObject) {
-      console.log("[setupCountryListName] deleting existing CountryList name");
-      old.delete();
-      await ctx.sync();
-    }
-
-    // add new one
-    ctx.workbook.names.add("CountryList", cg.getRange(listRangeAddr));
-    await ctx.sync();
-    console.log("[setupCountryListName] CountryList name created");
-  });
-  console.log("[setupCountryListName] done");
-}
-
-
-async function applyCountryDropdown(sheetName) {
-  console.log(`[applyCountryDropdown] start for sheet "${sheetName}"`);
-  await Excel.run(async ctx => {
-    const sheet = ctx.workbook.worksheets.getItem(sheetName);
-
-    // make sure our named range exists
-    console.log(`[applyCountryDropdown] ensuring CountryList exists`);
-    await setupCountryListName();
-
-    // figure out how many rows & which column is “Country”
-    const used = sheet.getUsedRange();
-    used.load("rowCount,columnCount");
-    await ctx.sync();
-    console.log(`[applyCountryDropdown] sheet has ${used.rowCount} rows`);
-
-    const header = sheet.getRangeByIndexes(0, 0, 1, used.columnCount);
-    header.load("values");
-    await ctx.sync();
-
-    const colIdx = header.values[0].indexOf("Country");
-    console.log(`[applyCountryDropdown] "Country" column index = ${colIdx}`);
-    if (colIdx < 0 || used.rowCount < 2) {
-      console.warn(`[applyCountryDropdown] no Country column or not enough rows, skipping`);
-      return;
-    }
-
-    // the “body” of that column
-    const dvRange = sheet.getRangeByIndexes(1, colIdx, used.rowCount - 1, 1);
-
-    dvRange.load("address");
-    await ctx.sync();
-    console.log(`[applyCountryDropdown] applying validation to range ${dvRange.address}`);
-
-    // assign the list validation pointing at named range
-    dvRange.dataValidation.rule = {
-      list: {
-        inCellDropdown: true,
-        source: "=CountryList"     
-      }
-    };
-
-    // allow arbitrary entries, disable the stop‐style error alert
-    dvRange.dataValidation.ignoreBlanks = true;
-    dvRange.dataValidation.errorAlert.showAlert = false;
-
-    await ctx.sync();
-    console.log(`[applyCountryDropdown] validation applied successfully`);
-  });
-  console.log(`[applyCountryDropdown] done for sheet "${sheetName}"`);
-}
-
-
 
 
 async function authFetch(url, opts = {}) {
@@ -4621,19 +4460,12 @@ async function pullFromDb() {
               dvRange.dataValidation.ignoreBlanks = true;
   
               let src;
-              if (colName === "Country") {
-                const cg = ctx.workbook.worksheets.getItem("Country Groupings");
-                const cgUsed = cg.getUsedRange();
-                cgUsed.load("rowCount");
-                await ctx.sync();
-                src = `'Country Groupings'!$B$2:$B$${cgUsed.rowCount}`;
-              } else {
-                const joined = options.join(",");
-                if (joined.length > 255) {
-                  console.warn(`Dropdown for "${colName}" exceeds 255 chars and will truncate.`);
-                }
-                src = joined;
+              const joined = options.join(",");
+              if (joined.length > 255) {
+                console.warn(`Dropdown for "${colName}" exceeds 255 chars and will truncate.`);
               }
+              src = joined;
+              
   
               dvRange.dataValidation.rule = {
                 list: { inCellDropdown: true, source: src }
@@ -4669,7 +4501,6 @@ async function pullFromDb() {
         }
 
         await ctx.sync();
-        await applyCountryDropdown(displayName);
       });
 
       status.innerText = "Adding Country Groupings sheet…";
@@ -4796,19 +4627,13 @@ async function pullOneTable(tableName) {
           dvRange.dataValidation.ignoreBlanks = true;
   
           let src;
-          if (colName === "Country") {
-            const cg = ctx.workbook.worksheets.getItem("Country Groupings");
-            const cgUsed = cg.getUsedRange();
-            cgUsed.load("rowCount");
-            await ctx.sync();
-            src = `'Country Groupings'!$B$2:$B$${cgUsed.rowCount}`;
-          } else {
-            const joined = options.join(",");
-            if (joined.length > 255) {
-              console.warn(`Dropdown for "${colName}" exceeds 255 chars and will truncate.`);
-            }
-            src = joined;
+      
+          const joined = options.join(",");
+          if (joined.length > 255) {
+            console.warn(`Dropdown for "${colName}" exceeds 255 chars and will truncate.`);
           }
+          src = joined;
+          
   
           dvRange.dataValidation.rule = {
             list: { inCellDropdown: true, source: src }
@@ -4841,8 +4666,6 @@ async function pullOneTable(tableName) {
     }
 
     await ctx.sync();
-    // enforce Country-only dropdown
-    await applyCountryDropdown(displayName);
   });
 
   return rows.length;

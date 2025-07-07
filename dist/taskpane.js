@@ -4035,11 +4035,13 @@ async function getPendingRows(tableName) {
     }
 
     // Pull live values
-    const used      = sheet.getUsedRange().load("values");
-    const headerRow = tbl.getHeaderRowRange().load("values");
+    const headerRange = tbl.getHeaderRowRange().load("values");
+    const bodyRange   = tbl.getDataBodyRange().load("values");
     await ctx.sync();
-    const allRows   = used.values.slice(1);           // skip header
-    const headers   = headerRow.values[0];
+    
+    // now headers and rows line up 1-for-1
+    const headers = headerRange.values[0];
+    const allRows = bodyRange.values;
     const headerMap = headers.map(h => DISPLAY_TO_DB[h] || h);
 
     // Build the “toPush” list exactly as in pushToDb

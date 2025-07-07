@@ -4444,7 +4444,7 @@ async function pullFromDb() {
         const table = sheet.tables.getItem(tblName);
 
         // grab the doc_code column in that table
-        const codeColumn = table.columns.getItem("doc_code");  
+        const codeColumn = table.columns.getItem("Document Code");  
         const codeRange  = codeColumn.getDataBodyRange();
 
         // set up custom rule: each entry must only appear once in the column
@@ -4452,7 +4452,7 @@ async function pullFromDb() {
         codeRange.dataValidation.rule = {
           custom: {
             // structured reference to check that COUNTIF(tbl[doc_code], this row’s [@doc_code]) == 1
-            formula1: `=COUNTIF(${tblName}[doc_code],[@doc_code])=1`
+            formula1: `=COUNTIF(${tblName}[Document Code],[@Document Code])=1`
           }
         };
 
@@ -4460,8 +4460,8 @@ async function pullFromDb() {
         codeRange.dataValidation.errorAlert = {
           showAlert:   true,                                       
           alertStyle:  Excel.DataValidationAlertStyle.stop,    
-          alertTitle:  "Duplicate doc_code",                   
-          alertMessage:"That doc_code already exists in this sheet. Please enter a unique code." 
+          alertTitle:  "Duplicate doc code",                   
+          alertMessage:"That doc code already exists in this sheet. Please enter a unique code." 
         };
 
         await ctx.sync();
@@ -4633,7 +4633,7 @@ async function pullOneTable(tableName) {
     const table = sheet.tables.getItem(tblName);
 
     // grab the doc_code column in that table
-    const codeColumn = table.columns.getItem("doc_code");  
+    const codeColumn = table.columns.getItem("Document Code");  
     const codeRange  = codeColumn.getDataBodyRange();
 
     // set up custom rule: each entry must only appear once in the column
@@ -4641,16 +4641,16 @@ async function pullOneTable(tableName) {
     codeRange.dataValidation.rule = {
       custom: {
         // structured reference to check that COUNTIF(tbl[doc_code], this row’s [@doc_code]) == 1
-        formula1: `=COUNTIF(${tblName}[doc_code],[@doc_code])=1`
+        formula1: `=COUNTIF(${tblName}[Document Code],[@Document Code])=1`
       }
     };
 
     // show a stop-style error if the rule is violated
     codeRange.dataValidation.errorAlert = {
-      showAlert:   true,                                         
-      alertStyle:  Excel.DataValidationAlertStyle.stop,      
-      alertTitle:  "Duplicate doc_code",                    
-      alertMessage:"That doc_code already exists in this sheet. Please enter a unique code." 
+      showAlert:   true,                                       
+      alertStyle:  Excel.DataValidationAlertStyle.stop,    
+      alertTitle:  "Duplicate doc code",                   
+      alertMessage:"That doc code already exists in this sheet. Please enter a unique code." 
     };
 
     await ctx.sync();

@@ -4809,8 +4809,10 @@ async function pushToDb() {
   }
   for (const { tableName, rows } of sheetsToPush) {
     const codes = rows.map(r => (r.doc_code||"").toString().trim());
+    console.log("codes", codes)
     // find any code that shows up more than once
     const dupes = codes.filter((c,i) => c && codes.indexOf(c) !== i);
+    console.log("dupes",dupes);
     if (dupes.length) {
       const list = [...new Set(dupes)].join(", ");
       alert(

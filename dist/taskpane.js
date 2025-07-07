@@ -4915,6 +4915,10 @@ async function pushToDb() {
     return toPush;
   });
 
+  if (!sheetsToPush.length) {
+    return (status.innerText = "No changes detected.");
+  }
+
   const hasInSheetDupes = await Excel.run(async ctx => {
     for (const { tableName } of sheetsToPush) {
       const displayName = tableName.replace(/_/g, " ");
@@ -4948,9 +4952,7 @@ async function pushToDb() {
   if (hasInSheetDupes) {
     return; 
   }
-  if (!sheetsToPush.length) {
-    return (status.innerText = "No changes detected.");
-  }
+
 
   for (const { tableName, rows } of sheetsToPush) {
     if (!await confirmPush(`${rows.length} change(s) to "${tableName}"?`)) {

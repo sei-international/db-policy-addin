@@ -4475,8 +4475,7 @@ async function pullFromDb() {
           sheet.load("name");
           await ctx.sync();
           // 1) grab the table we just created
-          const tblName = `tbl_${sheet.name.trim().toLowerCase().replace(/\s+/g,'_')}`;
-          const tbl     = sheet.tables.getItem(tblName);
+          const tbl     = sheet.tables.getItem(displayName);
 
           // 2) figure out the display name of the doc‐code column
           const docCodeHeader = COLUMN_MAP.doc_code; // should be "Document Code"
@@ -4662,10 +4661,8 @@ async function pullOneTable(tableName) {
             list: { inCellDropdown: true, source: src }
           };
         }
-        sheet.load("name");
-        await ctx.sync();
-        const tblName = `tbl_${sheet.name.trim().toLowerCase().replace(/\s+/g,'_')}`;
-        const tbl     = sheet.tables.getItem(tblName);
+          // 1) grab the table we just created
+        const tbl     = sheet.tables.getItem(displayName);
 
         // 2) figure out the display name of the doc‐code column
         const docCodeHeader = COLUMN_MAP.doc_code; // should be "Document Code"

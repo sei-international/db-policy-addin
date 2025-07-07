@@ -4852,7 +4852,7 @@ async function pushToDb() {
         `whose doc_code already exists:\n\n${list}\n\n` +
         `Please fix or remove those before pushing.`
       );
-      return; // abort the entire push
+      return (status.innerText("Push aborted due to duplicate entries.")); // abort the entire push
     }
   }
 

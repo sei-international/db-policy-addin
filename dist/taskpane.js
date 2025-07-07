@@ -4480,9 +4480,10 @@ async function pullFromDb() {
           
           // 2) figure out the display name of the doc‐code column
           const docCodeHeader = COLUMN_MAP.doc_code; // should be "Document Code"
-          
+          console.log("docCodeHeader", docCodeHeader);
           // 3) get that column’s data‐body range
           const col = tbl.columns.getItem(docCodeHeader);
+          console.log("col", col);
           const bodyRange = col.getDataBodyRange();
 
           // 4) apply a custom COUNTIF validation against the entire column
@@ -4667,9 +4668,10 @@ async function pullOneTable(tableName) {
 
         // 2) figure out the display name of the doc‐code column
         const docCodeHeader = COLUMN_MAP.doc_code; // should be "Document Code"
-        
+        console.log("docCodeHeader", docCodeHeader);
         // 3) get that column’s data‐body range
         const col = tbl.columns.getItem(docCodeHeader);
+        console.log("col", col);
         const bodyRange = col.getDataBodyRange();
 
         // 4) apply a custom COUNTIF validation against the entire column

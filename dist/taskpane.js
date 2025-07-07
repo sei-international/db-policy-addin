@@ -4120,46 +4120,75 @@ async function pullCountryGroupings() {
     await ctx.sync();
   });
 }
+async function setupCountryListName() {
+  await Excel.run(async ctx => {
+    const cgSheet = ctx.workbook.worksheets.getItem("Country Groupings");
+    // figure out how many rows
+    const used = cgSheet.getUsedRange();
+    used.load("rowCount");
+    await ctx.sync();
+    const lastRow = used.rowCount;
+
+    // define B2:B{lastRow}
+    const listRng = cgSheet.getRange(`B2:B${lastRow}`);
+
+    const existing = ctx.workbook.names.getItemOrNullObject("CountryList");
+    await ctx.sync();
+    if (!existing.isNullObject) {
+      existing.delete();
+      await ctx.sync();
+    }
+
+    ctx.workbook.names.add("CountryList", listRng);
+    await ctx.sync();
+  });
+}
+
 async function applyCountryValidation(sheetName) {
   await Excel.run(async ctx => {
     const sheet = ctx.workbook.worksheets.getItem(sheetName);
 
-    const used    = sheet.getUsedRange();
+    // 1) used range
+    const used = sheet.getUsedRange();
     used.load("rowCount,columnCount");
     await ctx.sync();
 
-    const headerR = sheet.getRangeByIndexes(0, 0, 1, used.columnCount);
-    headerR.load("values");
+    // 2) find the "Country" header column
+    const hdr = sheet.getRangeByIndexes(0, 0, 1, used.columnCount);
+    hdr.load("values");
     await ctx.sync();
-    const headers = headerR.values[0];
-    const colIdx  = headers.indexOf("Country");
+    const colIdx = hdr.values[0].indexOf("Country");
     if (colIdx < 0 || used.rowCount < 2) return;
 
-    const cgTable         = ctx.workbook.tables.getItem("tbl_CountryGroupings");
-    const countryColBody  = cgTable
-      .columns.getItem("Country")
-      .getDataBodyRange();
-
-    countryColBody.load("address");
-    await ctx.sync();
-
-    const a1address = countryColBody.address;          
-    const source    = `=${a1address}`;                 
-
-    // apply to every cell in this sheet’s Country column
+    // 3) grab rows 2..last in that column
     const dvRange = sheet.getRangeByIndexes(
-      1,           // start on row 2
-      colIdx,      // the Country column we found
-      used.rowCount - 1,
-      1
+      /*startRow*/ 1,
+      /*startCol*/ colIdx,
+      /*rowCount*/ used.rowCount - 1,
+      /*colCount*/ 1
     );
+
+    // 4) assign  named range as the source
     dvRange.dataValidation.rule = {
-      list: { inCellDropdown: true, source }
+      list: {
+        inCellDropdown: true,
+        source: "=CountryList"
+      }
+    };
+
+    // 5) suppress errors on existing values—but keep the dropdown for new edits
+    dvRange.dataValidation.ignoreBlanks = true;
+    dvRange.dataValidation.errorAlert = {
+      showAlert: false,
+      title:     "",
+      message:   "",
+      style:     Excel.DataValidationAlertStyle.stop
     };
 
     await ctx.sync();
   });
 }
+
 
 
 

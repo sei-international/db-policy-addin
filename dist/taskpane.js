@@ -4012,64 +4012,100 @@ function scheduleReminder(intervalMs = 30 * 60 * 1000) {
     showReminderModal();
   }, intervalMs);
 }
-async function hasUnpushedChanges(tableName) {
-  return Excel.run(async ctx => {
+async function getPendingRows(tableName) {
+  const pending = await Excel.run(async ctx => {
     const displayName = tableName.replace(/_/g, " ");
-    const sheet      = ctx.workbook.worksheets.getItemOrNullObject(displayName);
-    const tbl        = sheet.tables.getItemOrNullObject(`tbl_${tableName}`);
-    const cacheSheet = ctx.workbook.worksheets.getItemOrNullObject(`__cache__${tableName}`);
+    const sheet       = ctx.workbook.worksheets.getItem(displayName);
+    const tbl         = sheet.tables.getItem(`tbl_${tableName}`);
+    const cacheSheet  = ctx.workbook.worksheets.getItemOrNullObject(`__cache__${tableName}`);
     await ctx.sync();
-    if (sheet.isNullObject || tbl.isNullObject || cacheSheet.isNullObject) {
-      // nothing to compare
-      return false;
+    
+    // Build a quick Map<doc_code, cacheRowObject>
+    const cacheMap = new Map();
+    if (!cacheSheet.isNullObject) {
+      const used = cacheSheet.getUsedRange().load("values");
+      await ctx.sync();
+      const [headerRow, ...dataRows] = used.values || [];
+      const cacheKeys = headerRow.map(h => h.toLowerCase());
+      dataRows.forEach(r => {
+        const o = {};
+        cacheKeys.forEach((k,i) => o[k] = r[i]);
+        cacheMap.set(o.doc_code, o);
+      });
     }
 
-    // load header + body of live table
-    const hdrLive = tbl.getHeaderRowRange().load("values");
-    const bodyLive= tbl.getDataBodyRange().load("values");
-    // load cache (first row is header, rest is data)
-    const cacheRg = cacheSheet.getUsedRange().load("values");
+    // Pull live values
+    const used      = sheet.getUsedRange().load("values");
+    const headerRow = tbl.getHeaderRowRange().load("values");
     await ctx.sync();
+    const allRows   = used.values.slice(1);           // skip header
+    const headers   = headerRow.values[0];
+    const headerMap = headers.map(h => DISPLAY_TO_DB[h] || h);
 
-    const liveCols = hdrLive.values[0];
-    const liveRows = bodyLive.values;
-    const cacheAll = cacheRg.values;
-    if (cacheAll.length < 2) return false;  // no cache data
+    // Build the “toPush” list exactly as in pushToDb
+    const toPush = [];
+    const today = new Date();
+    const formattedToday = new Intl.DateTimeFormat("en-GB", {
+      day: "numeric", month: "long", year: "numeric"
+    }).format(today);
 
-    const cacheCols = cacheAll[0];
-    const cacheRows = cacheAll.slice(1);
+    for (const row of allRows) {
+      const obj = {};
+      const docCode = String(row[ headers.indexOf(COLUMN_MAP.doc_code) ] || "").trim();
+      const orig    = cacheMap.get(docCode) || {};
 
-    // build a map from live-col-idx > cache-col-idx, -1 if not present
-    const colMap = liveCols.map((disp, i) => {
-      const db    = DISPLAY_TO_DB[disp] || disp;
-      return cacheCols.indexOf(db);
-    });
+      row.forEach((val, idx) => {
+        const dbCol = headerMap[idx];
+        if (!dbCol) return;
+        // never blow away existing hyperlink on non‐policies sheets:
+        if (dbCol === "hyperlink" && tableName !== "policies") return;
 
-    // if the *number* of non-blank live rows differs from cache, have a change
-    const nonBlankLiveCount = liveRows.filter(r => r.some(c => c != null && String(c).trim() !== "")).length;
-    const nonBlankCacheCount= cacheRows.filter(r=> r.some(c => c != null && String(c).trim() !== "")).length;
-    if (nonBlankLiveCount !== nonBlankCacheCount) {
-      return true;
-    }
-
-    // compare each cell in columns that exist in both
-    for (let r = 0; r < liveRows.length; r++) {
-      const live = liveRows[r];
-      const cache= cacheRows[r] || [];
-      for (let c = 0; c < live.length; c++) {
-        const j = colMap[c];
-        if (j < 0) continue;         // skip columns with no cache counterpart
-        const a = (live[c]  == null ? "" : String(live[c]).trim());
-        const b = (cache[j] == null ? "" : String(cache[j]).trim());
-        if (a !== b) {
-          return true;
+        // only URLs or blanks override on hyperlink fields
+        if (dbCol === "hyperlink") {
+          if (typeof val === "string" && (val.startsWith("http") || val === "")) {
+            obj.hyperlink = val;
+          } else if (orig.hyperlink) {
+            obj.hyperlink = orig.hyperlink;
+          }
+        } else {
+          obj[dbCol] = val;
         }
+      });
+
+      // inherited defaults on policies
+      if (tableName === "policies" && !obj.country && obj.doc_code) {
+        const iso3 = obj.doc_code.slice(0,3).toUpperCase();
+        const grp = COUNTRY_GROUPINGS.find(g=>g.iso3c===iso3);
+        if (grp) obj.country = grp.Country;
       }
+
+      // strip inherited fields on non‐policies
+      if (tableName !== "policies") {
+        ["country","policy_year","policy_name","policy_format"]
+          .forEach(k=>delete obj[k]);
+      }
+
+      obj.date_entry = formattedToday;
+      if (!obj.doc_code) continue;
+
+      // compare to cache (ignore date_entry)
+      const changed = !orig.doc_code || Object
+        .entries(obj)
+        .some(([k,v])=> k!=="date_entry" && String(orig[k]||"")!==String(v||""));
+      if (changed) toPush.push(obj);
     }
 
-    return false;  // nothing different
+    return toPush;
   });
+
+  return pending;
 }
+
+async function hasUnpushedChanges(tableName) {
+  const rows = await getPendingRows(tableName);
+  return rows.length > 0;
+}
+
 
 
 function setupTabs() {

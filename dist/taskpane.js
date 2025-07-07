@@ -4013,108 +4013,136 @@ function scheduleReminder(intervalMs = 30 * 60 * 1000) {
   }, intervalMs);
 }
 async function getPendingRows(tableName) {
-  // 1) Load the “real” column list once
-  let dbCols;
+  // fetch the “real” columns from the server
+  let dbCols = [];
   try {
     const colsRes = await authFetch(
-      `${apiBase}/columns?table=${encodeURIComponent(tableName)}`,
+      `${apiBase}/columns?table=${encodeURIComponent(tableName)}`, 
       { method: "GET" }
     );
-    if (!colsRes.ok) throw new Error(await colsRes.text());
     dbCols = await colsRes.json();
   } catch (e) {
-    console.error(`❌ getPendingRows: could not load columns for ${tableName}`, e);
+    console.error(`[DEBUG][${tableName}] failed to load dbCols:`, e);
     return [];
   }
+  console.log(`[DEBUG][${tableName}] dbCols =`, dbCols);
 
-  // 2) Now batch read the sheet exactly like pushToDb does
   return Excel.run(async ctx => {
     const displayName = tableName.replace(/_/g, " ");
     const sheet       = ctx.workbook.worksheets.getItem(displayName);
-    const used        = sheet.getUsedRange().load("values");
+    const usedRange   = sheet.getUsedRange().load("values");
     const cacheSheet  = ctx.workbook.worksheets.getItemOrNullObject(`__cache__${tableName}`);
     await ctx.sync();
 
-    // build cacheMap<doc_code,record>
+    // build cache map
     const cacheMap = new Map();
     if (!cacheSheet.isNullObject) {
-      const usedCache = cacheSheet.getUsedRange().load("values");
+      const cacheUsed = cacheSheet.getUsedRange().load("values");
       await ctx.sync();
-      const [hdr, ...rows] = usedCache.values || [];
+      const [hdr, ...rows] = cacheUsed.values || [];
       const keys = hdr.map(h => h.toLowerCase());
-      rows.forEach(r => {
-        const o = {};
-        keys.forEach((k,i) => o[k] = r[i]);
-        cacheMap.set(o.doc_code, o);
-      });
+      for (const r of rows) {
+        const rec = {};
+        keys.forEach((k, i) => rec[k] = r[i]);
+        cacheMap.set(rec.doc_code, rec);
+      }
     }
+    console.log(`[DEBUG][${tableName}] cacheMap entries =`, cacheMap.size);
 
-    // pull in all the sheet’s header + data rows
-    const [headerRow, ...dataRows] = used.values || [];
+    // read headers + data
+    const all = usedRange.values || [];
+    const headerRow = all[0] || [];
+    const dataRows  = all.slice(1);
     const headerMap = headerRow.map(h => DISPLAY_TO_DB[h] || h);
 
-    // prepare date stamp
+    console.log(`[DEBUG][${tableName}] headerRow =`, headerRow);
+    console.log(`[DEBUG][${tableName}] headerMap =`, headerMap);
+
+    const today = new Date();
     const formattedToday = new Intl.DateTimeFormat("en-GB", {
       day: "numeric", month: "long", year: "numeric"
-    }).format(new Date());
+    }).format(today);
 
     const toPush = [];
 
-    for (const row of dataRows) {
+    dataRows.forEach((row, rowIndex) => {
       const obj     = {};
       const codeIdx = headerRow.indexOf(COLUMN_MAP.doc_code);
-      const docCode = String(row[codeIdx] || "").trim();
+      const docCode = String(row[codeIdx]||"").trim();
       const orig    = cacheMap.get(docCode);
 
-      // build each field exactly like pushToDb
+      console.group(`[DEBUG][${tableName}] row #${rowIndex+1} (doc_code=${docCode})`);
+      console.log("  orig from cache =", orig);
+
+      // build payload fields
       row.forEach((cellValue, colIdx) => {
         const dbCol = headerMap[colIdx];
-        // same guards:
-        if (!dbCol || !dbCols.includes(dbCol))                return;
-        if (dbCol === "hyperlink" && tableName !== "policies") return;
+        if (!dbCol)                return console.log(`   skip colIdx=${colIdx} (no mapping)`);
+        if (!dbCols.includes(dbCol)) return console.log(`   skip "${dbCol}" (not in dbCols)`);
+        if (dbCol==="hyperlink" && tableName!=="policies") 
+                                   return console.log(`   skip hyperlink on non-policies`);
 
-        if (dbCol === "hyperlink") {
-          if (typeof cellValue === "string" &&
-              (cellValue.startsWith("http") || cellValue === "")
-          ) {
+        if (dbCol==="hyperlink") {
+          if (typeof cellValue==="string" && (cellValue.startsWith("http")||cellValue==="")) {
             obj.hyperlink = cellValue;
+            console.log(`   obj.hyperlink ← "${cellValue}"`);
           } else if (orig && orig.hyperlink) {
             obj.hyperlink = orig.hyperlink;
+            console.log(`   obj.hyperlink ← orig.hyperlink "${orig.hyperlink}"`);
           }
         } else {
           obj[dbCol] = cellValue;
+          console.log(`   obj.${dbCol} ←`, cellValue);
         }
       });
 
-      // inherited defaults on policies
-      if (tableName === "policies" && !obj.country && obj.doc_code) {
+      // policies defaults
+      if (tableName==="policies" && !obj.country && obj.doc_code) {
         const iso3 = obj.doc_code.slice(0,3).toUpperCase();
         const grp  = COUNTRY_GROUPINGS.find(g=>g.iso3c===iso3);
-        if (grp) obj.country = grp.Country;
+        if (grp) {
+          obj.country = grp.Country;
+          console.log(`   obj.country defaulted to`, grp.Country);
+        }
       }
 
       // strip inherited on non-policies
-      if (tableName !== "policies") {
-        ["country","policy_year","policy_name","policy_format"]
-          .forEach(k=>delete obj[k]);
+      if (tableName!=="policies") {
+        ["country","policy_year","policy_name","policy_format"].forEach(k=>{
+          if (obj[k] !== undefined) {
+            delete obj[k];
+            console.log(`   deleted inherited ${k}`);
+          }
+        });
       }
 
-      // always set date_entry (and ignore it in the diff)
       obj.date_entry = formattedToday;
-      if (!obj.doc_code) continue;
+      console.log(`   obj.date_entry ←`, formattedToday);
 
-      // same “changed?” test
-      const isNew    = !orig;
-      const hasDelta = Object.keys(obj).some(k =>
-        k !== "date_entry" &&
-        String((orig && orig[k])||"") !== String(obj[k]||"")
+      // skip blank codes
+      if (!obj.doc_code) {
+        console.log("   skip: no doc_code");
+        console.groupEnd();
+        return;
+      }
+
+      // detect changes
+      const isNew = !orig;
+      const hasDelta = Object.entries(obj).some(([k,v]) => 
+        k!=="date_entry" && String((orig && orig[k])||"") !== String(v||"")
       );
+      console.log(`   isNew=${isNew}, hasDelta=${hasDelta}`);
 
       if (isNew || hasDelta) {
         toPush.push(obj);
+        console.log("   → marked for push:", obj);
+      } else {
+        console.log("   → no change");
       }
-    }
+      console.groupEnd();
+    });
 
+    console.log(`[DEBUG][${tableName}] total toPush =`, toPush.length);
     return toPush;
   });
 }

@@ -4183,6 +4183,7 @@ async function pullDocCodeIntoTables(tableNames, code, policy) {
   });
 }
 
+// This function is no longer in use but I am keeping for now because the logic could be reused for other SQL queries?
 async function pullOnePolicy(tableName, code) {
   await Excel.run(async ctx => {
     // 1) locate the sheet & table
@@ -4440,7 +4441,30 @@ async function pullFromDb() {
           sheet.getRangeByIndexes(0, 0, used.rowCount, used.columnCount),
           true
         ).name = tblName;
+        const table = sheet.tables.getItem(tblName);
 
+        // grab the doc_code column in that table
+        const codeColumn = table.columns.getItem("doc_code");  
+        const codeRange  = codeColumn.getDataBodyRange();
+
+        // set up custom rule: each entry must only appear once in the column
+        codeRange.dataValidation.ignoreBlanks = false;
+        codeRange.dataValidation.rule = {
+          custom: {
+            // structured reference to check that COUNTIF(tbl[doc_code], this row’s [@doc_code]) == 1
+            formula1: `=COUNTIF(${tblName}[doc_code],[@doc_code])=1`
+          }
+        };
+
+        // show a stop-style error if the rule is violated
+        codeRange.dataValidation.errorAlert = {
+          showError:   true,
+          errorStyle:  Excel.DataValidationErrorStyle.stop,
+          errorTitle:  "Duplicate doc_code",
+          errorMessage:"That doc_code already exists in this sheet. Please enter a unique code."
+        };
+
+        await ctx.sync();
         // Add dropdowns
         await Excel.run(async ctx => {
           const sheet = ctx.workbook.worksheets.getActiveWorksheet();
@@ -4606,7 +4630,30 @@ async function pullOneTable(tableName) {
       sheet.getRangeByIndexes(0, 0, used.rowCount, used.columnCount),
       true
     ).name = tblName;
+    const table = sheet.tables.getItem(tblName);
 
+    // grab the doc_code column in that table
+    const codeColumn = table.columns.getItem("doc_code");  
+    const codeRange  = codeColumn.getDataBodyRange();
+
+    // set up custom rule: each entry must only appear once in the column
+    codeRange.dataValidation.ignoreBlanks = false;
+    codeRange.dataValidation.rule = {
+      custom: {
+        // structured reference to check that COUNTIF(tbl[doc_code], this row’s [@doc_code]) == 1
+        formula1: `=COUNTIF(${tblName}[doc_code],[@doc_code])=1`
+      }
+    };
+
+    // show a stop-style error if the rule is violated
+    codeRange.dataValidation.errorAlert = {
+      showError:   true,
+      errorStyle:  Excel.DataValidationErrorStyle.stop,
+      errorTitle:  "Duplicate doc_code",
+      errorMessage:"That doc_code already exists in this sheet. Please enter a unique code."
+    };
+
+    await ctx.sync();
     // Add dropdowns
     await Excel.run(async ctx => {
         const sheet = ctx.workbook.worksheets.getActiveWorksheet();

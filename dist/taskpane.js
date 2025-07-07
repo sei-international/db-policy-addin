@@ -4013,11 +4013,11 @@ function scheduleReminder(intervalMs = 30 * 60 * 1000) {
   }, intervalMs);
 }
 async function getPendingRows(tableName) {
-  // 1) load the “true” column list for this table
+  // 1) Load the “real” column list once
   let dbCols;
   try {
     const colsRes = await authFetch(
-      `${apiBase}/columns?table=${encodeURIComponent(tableName)}`, 
+      `${apiBase}/columns?table=${encodeURIComponent(tableName)}`,
       { method: "GET" }
     );
     if (!colsRes.ok) throw new Error(await colsRes.text());
@@ -4027,55 +4027,50 @@ async function getPendingRows(tableName) {
     return [];
   }
 
-  // 2) now build the “toPush” array exactly as pushToDb does
+  // 2) Now batch read the sheet exactly like pushToDb does
   return Excel.run(async ctx => {
     const displayName = tableName.replace(/_/g, " ");
     const sheet       = ctx.workbook.worksheets.getItem(displayName);
-    const tbl         = sheet.tables.getItem(`tbl_${tableName}`);
+    const used        = sheet.getUsedRange().load("values");
     const cacheSheet  = ctx.workbook.worksheets.getItemOrNullObject(`__cache__${tableName}`);
     await ctx.sync();
 
-    // BUILD cacheMap<doc_code, record>
+    // build cacheMap<doc_code,record>
     const cacheMap = new Map();
     if (!cacheSheet.isNullObject) {
-      const used = cacheSheet.getUsedRange().load("values");
+      const usedCache = cacheSheet.getUsedRange().load("values");
       await ctx.sync();
-      const [hdr, ...data] = used.values || [];
-      const keys = hdr.map(h=>h.toLowerCase());
-      data.forEach(r=>{
+      const [hdr, ...rows] = usedCache.values || [];
+      const keys = hdr.map(h => h.toLowerCase());
+      rows.forEach(r => {
         const o = {};
-        keys.forEach((k,i)=>o[k]=r[i]);
+        keys.forEach((k,i) => o[k] = r[i]);
         cacheMap.set(o.doc_code, o);
       });
     }
 
-    // LOAD table header+body (so headers[idx] ↔ row[idx])
-    const headerRange = tbl.getHeaderRowRange().load("values");
-    const bodyRange   = tbl.getDataBodyRange().load("values");
-    await ctx.sync();
+    // pull in all the sheet’s header + data rows
+    const [headerRow, ...dataRows] = used.values || [];
+    const headerMap = headerRow.map(h => DISPLAY_TO_DB[h] || h);
 
-    const headers   = headerRange.values[0];
-    const allRows   = bodyRange.values;
-    const headerMap = headers.map(h=> DISPLAY_TO_DB[h]||h);
-
-    // make today’s date string
+    // prepare date stamp
     const formattedToday = new Intl.DateTimeFormat("en-GB", {
       day: "numeric", month: "long", year: "numeric"
     }).format(new Date());
 
     const toPush = [];
 
-    for (const row of allRows) {
+    for (const row of dataRows) {
       const obj     = {};
-      const codeIdx = headers.indexOf(COLUMN_MAP.doc_code);
-      const docCode = String(row[codeIdx]||"").trim();
-      const orig    = cacheMap.get(docCode);    // *undefined* if new
+      const codeIdx = headerRow.indexOf(COLUMN_MAP.doc_code);
+      const docCode = String(row[codeIdx] || "").trim();
+      const orig    = cacheMap.get(docCode);
 
-      // build each field just like pushToDb
+      // build each field exactly like pushToDb
       row.forEach((cellValue, colIdx) => {
         const dbCol = headerMap[colIdx];
-        // same guards
-        if (!dbCol || !dbCols.includes(dbCol)) return;
+        // same guards:
+        if (!dbCol || !dbCols.includes(dbCol))                return;
         if (dbCol === "hyperlink" && tableName !== "policies") return;
 
         if (dbCol === "hyperlink") {
@@ -4098,26 +4093,23 @@ async function getPendingRows(tableName) {
         if (grp) obj.country = grp.Country;
       }
 
-      // strip inherited fields on non-policies
+      // strip inherited on non-policies
       if (tableName !== "policies") {
         ["country","policy_year","policy_name","policy_format"]
           .forEach(k=>delete obj[k]);
       }
 
-      // always stamp date_entry
+      // always set date_entry (and ignore it in the diff)
       obj.date_entry = formattedToday;
-
-      // nothing to do for blank rows
       if (!obj.doc_code) continue;
 
       // same “changed?” test
-      const isNew     = !orig;
-      const hasDelta  = Object
-        .keys(obj)
-        .some(k=>
-          k !== "date_entry" &&
-          String((orig && orig[k])||"") !== String(obj[k]||"")
-        );
+      const isNew    = !orig;
+      const hasDelta = Object.keys(obj).some(k =>
+        k !== "date_entry" &&
+        String((orig && orig[k])||"") !== String(obj[k]||"")
+      );
+
       if (isNew || hasDelta) {
         toPush.push(obj);
       }

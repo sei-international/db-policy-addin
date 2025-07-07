@@ -4148,48 +4148,40 @@ async function applyCountryValidation(sheetName) {
   await Excel.run(async ctx => {
     const sheet = ctx.workbook.worksheets.getItem(sheetName);
 
-    // 1) used range
+    // 1) grab how many rows & find the Country column
     const used = sheet.getUsedRange();
     used.load("rowCount,columnCount");
     await ctx.sync();
+    if (used.rowCount < 2) return;
 
-    // 2) find the "Country" header column
     const hdr = sheet.getRangeByIndexes(0, 0, 1, used.columnCount);
     hdr.load("values");
     await ctx.sync();
     const colIdx = hdr.values[0].indexOf("Country");
-    if (colIdx < 0 || used.rowCount < 2) return;
+    if (colIdx < 0) return;
 
-    // 3) grab rows 2..last in that column
-    const dvRange = sheet.getRangeByIndexes(
-      /*startRow*/ 1,
-      /*startCol*/ colIdx,
-      /*rowCount*/ used.rowCount - 1,
-      /*colCount*/ 1
-    );
+    // 2) build the target cells to validate (all rows under that header)
+    const dvRange = sheet.getRangeByIndexes(1, colIdx, used.rowCount - 1, 1);
 
-    // 4) assign  named range as the source
+    // 3) pull the Country‐column from Groupings table by Range
+    const cgTable = ctx.workbook.tables.getItem("tbl_CountryGroupings");
+    const countryListRange = cgTable.columns
+      .getItem("Country")
+      .getDataBodyRange();
+    // must sync so Excel actually knows its address
+    await ctx.sync();
+
+    // 4) assign validation rule to that Range object
     dvRange.dataValidation.rule = {
       list: {
         inCellDropdown: true,
-        source: "=CountryList"
+        source: countryListRange
       }
     };
 
-    // force every entry to match CountryList, show a prompt,
-    // and block anything else with an error-popup:
-    dvRange.dataValidation.rule = {
-      list: {
-        inCellDropdown: true,
-        source:         "=CountryList"
-      }
-    };
-    dvRange.dataValidation.ignoreBlanks = false;
-    dvRange.dataValidation.prompt = {
-      showPrompt: true,
-      title:      "Pick a country",
-      message:    "Start typing... autocomplete & drop-down will appear."
-    };
+    // 5) ignore empty cells, but block anything else with an error dialog
+    dvRange.dataValidation.ignoreBlanks = true;
+
     dvRange.dataValidation.errorAlert = {
       showAlert: true,
       style:     Excel.DataValidationAlertStyle.stop,
@@ -4197,13 +4189,9 @@ async function applyCountryValidation(sheetName) {
       message:   "Please select a country from the list."
     };
 
-
     await ctx.sync();
   });
 }
-
-
-
 
 async function authFetch(url, opts = {}) {
   const token = await getToken().catch(err => {

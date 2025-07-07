@@ -4664,18 +4664,17 @@ async function pullOneTable(tableName) {
 
     // Add dropdowns
     await Excel.run(async ctx => {
-      const dropdownSheetName = "Lists";
-      const sheet = ctx.workbook.worksheets.getActiveWorksheet();
-      const used = sheet.getUsedRange();
-      used.load("rowCount,columnCount");
-      await ctx.sync();
-
-      const headerRange = sheet.getRangeByIndexes(0, 0, 1, used.columnCount);
-      headerRange.load("values");
-      await ctx.sync();
-      const headers = headerRange.values[0];
-
-      for (const [colName, options] of Object.entries(dropdowns)) {
+        const sheet = ctx.workbook.worksheets.getActiveWorksheet();
+        const used  = sheet.getUsedRange();
+        used.load("rowCount,columnCount");
+        await ctx.sync();
+  
+        const headerR = sheet.getRangeByIndexes(0, 0, 1, used.columnCount);
+        headerR.load("values");
+        await ctx.sync();
+        const headers = headerR.values[0];
+  
+        for (const [colName, options] of Object.entries(dropdowns)) {
           const cIdx = headers.indexOf(colName);
           if (cIdx < 0 || used.rowCount < 2) continue;
   
@@ -4701,9 +4700,9 @@ async function pullOneTable(tableName) {
             list: { inCellDropdown: true, source: src }
           };
         }
-
-      await ctx.sync();
-    });
+  
+        await ctx.sync();
+      });
 
     sheet.getUsedRange().getEntireColumn().format.columnWidth = 130;
     sheet.getUsedRange().getEntireRow().format.rowHeight = 18;

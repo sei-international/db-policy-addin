@@ -4135,18 +4135,22 @@ async function applyCountryValidation(sheetName) {
     await ctx.sync();
     const headers = headerR.values[0];
     const colIdx = headers.indexOf("Country");
+    console.log("colIdx:", colIdx);
+    console.log("used.rowCount", used.rowCount);
     if (colIdx < 0 || used.rowCount < 2) return;
 
     // find last row in the Country Groupings sheet
     const cg = ctx.workbook.worksheets.getItem("Country Groupings");
     const cgUsed = cg.getUsedRange();
+    console.log("cgUsed", cgUsed);
     cgUsed.load("rowCount");
     await ctx.sync();
 
     // set up the validation range - Column B rows 2..last
     const source = `'Country Groupings'!$B$2:$B$${cgUsed.rowCount}`;
+    console.log("source", source);
     const dvRange = sheet.getRangeByIndexes(1, colIdx, used.rowCount - 1, 1);
-
+    console.log("dvRange", dvRange);
     dvRange.dataValidation.rule = {
       list: { inCellDropdown: true, source }
     };

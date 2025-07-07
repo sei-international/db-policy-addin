@@ -4685,157 +4685,37 @@ async function pushToDb() {
   }
 
   // 2) Determine which sheets to push
-  const sheetsToPush = await Excel.run(async ctx => {
-    const toPush = [];
-    const sheets = ctx.workbook.worksheets;
-    sheets.load("items/name,items/visibility");
-    await ctx.sync();
+  const sheetCodeMaps = {};
 
-    for (const sheet of sheets.items) {
-      if (
-        sheet.visibility !== Excel.SheetVisibility.visible ||
-        sheet.name.startsWith("__cache__")
-      )
-        continue;
-
-      const tableName = sheet.name.replace(/\s+/g, "_").toLowerCase();
-      if (!validTables.has(tableName)) continue;
-
-      // 2a) Fetch DB columns
-      let dbCols;
-      try {
-        const colRes = await authFetch(`${apiBase}/columns?table=${encodeURIComponent(tableName)}`);
-        dbCols = await colRes.json();
-      } catch {
-        status.innerText = `❌ Unable to load columns for ${tableName}`;
-        continue;
-      }
-
-      // 2b) Load cache snapshot (if exists)
-      const cacheSheet = ctx.workbook.worksheets.getItemOrNullObject(`__cache__${tableName}`);
-      await ctx.sync();
-      const cacheMap = new Map();
-      if (!cacheSheet.isNullObject) {
-        const used = cacheSheet.getUsedRange();
-        used.load("values");
-        await ctx.sync();
-        const [headersRow, ...dataRows] = used.values || [];
-        const cacheHeaders = headersRow.map(h => h.toLowerCase());
-        for (const row of dataRows) {
-          const obj = {};
-          cacheHeaders.forEach((h, i) => (obj[h] = row[i]));
-          cacheMap.set(obj.doc_code, obj);
-        }
-      }
-
-      // 2c) Read live sheet
-      const used = sheet.getUsedRange();
-      used.load("values");
-      await ctx.sync();
-      const [headerRow, ...dataRows] = used.values || [];
-      const headerMap = headerRow.map(h => DISPLAY_TO_DB[h] || h);
-
-      // 2d) Build rows to push
-      const toTablePush = [];
-      const today = new Date();
-      const formattedToday = new Intl.DateTimeFormat("en-GB", {
-        day: "numeric",
-        month: "long",
-        year: "numeric"
-      }).format(today);
-
-      for (const row of dataRows) {
-        const obj     = {};
-
-        // get this row’s doc_code so we can look up the original hyperlink
-        const codeIdx     = headerRow.indexOf(COLUMN_MAP.doc_code);
-        const docCode     = String(row[codeIdx] || "").trim();
-        const cacheEntry  = cacheMap.get(docCode) || {};
-      
-        row.forEach((cellValue, colIdx) => {
-          const dbCol = headerMap[colIdx];
-          if (dbCol === "hyperlink" && tableName !== "policies") return;
-          if (!dbCol || !dbCols.includes(dbCol)) return;
-      
-          if (dbCol === "hyperlink") {
-            // only overwrite if the user actually typed/pasted a valid URL or cleared it
-            if (typeof cellValue === "string" && (cellValue.startsWith("http") || cellValue === "")) {
-              obj.hyperlink = cellValue;
-            } else if (cacheEntry.hyperlink) {
-              // otherwise keep the old URL from cache
-              obj.hyperlink = cacheEntry.hyperlink;
-            }
-          } else {
-            obj[dbCol] = cellValue;
-          }
-        });
-
-        if (tableName === "policies" && !obj.country && obj.doc_code) {
-          const iso3 = String(obj.doc_code).substring(0, 3).toUpperCase();
-          const grp = COUNTRY_GROUPINGS.find(g => g.iso3c === iso3);
-          if (grp) obj.country = grp.Country;
-        }
-
-        // Remove inherited fields on non-policy tables
-        if (tableName !== "policies") {
-          ["country", "policy_year", "policy_name", "policy_format"].forEach(k => delete obj[k]);
-        }
-
-        // Always update the push date
-        obj.date_entry = formattedToday;
-        if (!obj.doc_code) continue;
-
-        const orig = cacheMap.get(obj.doc_code);
-        const isChanged = !orig || Object.keys(obj).some(k =>
-          k !== "date_entry" &&
-          String(orig[k] ?? "") !== String(obj[k] ?? "")
-        );
-
-        if (isChanged) {
-          toTablePush.push(obj);
-        }
-      }
-
-      if (toTablePush.length) {
-        toPush.push({ tableName, rows: toTablePush });
-      }
-    }
-
-    return toPush;
-  });
-
-  if (!sheetsToPush.length) {
-    return (status.innerText = "No changes detected.");
+await Excel.run(async ctx => {
+  // a) gather all the DataBodyRange objects and load their values
+  const rangesByTable = {};
+  for (const { tableName } of sheetsToPush) {
+    const displayName = tableName.replace(/_/g, " ");
+    const tblName     = `tbl_${tableName}`;
+    const tbl         = ctx.workbook.worksheets
+                            .getItem(displayName)
+                            .tables.getItem(tblName);
+    const col         = tbl.columns.getItem(COLUMN_MAP.doc_code);
+    const bodyRange   = col.getDataBodyRange();
+    bodyRange.load("values");
+    rangesByTable[tableName] = bodyRange;
   }
-  const sheetCodeMaps = {}; // { tableName: Set(existingDocCodes) }
-  await Excel.run(async ctx => {
-    for (const { tableName } of sheetsToPush) {
-      const displayName = tableName.replace(/_/g, " ");
-      const tblName     = `tbl_${tableName}`;
-      const sheet       = ctx.workbook.worksheets.getItem(displayName);
-      const tbl         = sheet.tables.getItem(tblName);
 
-      // grab the “Document Code” column in that table
-      const codeHeader = COLUMN_MAP.doc_code;       // e.g. "Document Code"
-      const col         = tbl.columns.getItem(codeHeader);
-      const bodyRange   = col.getDataBodyRange();
-      bodyRange.load("values");
-    }
-    await ctx.sync();
+  // b) sync once for all loads
+  await ctx.sync();
 
-    // build our sets
-    for (const { tableName } of sheetsToPush) {
-      const displayName = tableName.replace(/_/g, " ");
-      const tblName     = `tbl_${tableName}`;
-      const sheet       = ctx.workbook.worksheets.getItem(displayName);
-      const tbl         = sheet.tables.getItem(tblName);
-      const col         = tbl.columns.getItem(COLUMN_MAP.doc_code);
-      const vals        = col.getDataBodyRange().values.flat().map(v => (v||"").toString().trim());
-      sheetCodeMaps[tableName] = new Set(vals);
-    }
-  });
+  // c) build our Sets
+  for (const [tableName, bodyRange] of Object.entries(rangesByTable)) {
+    // flatten the 2D array into a single list of codes
+    const flatCodes = bodyRange.values
+      .map(row => row[0]?.toString().trim() || "")
+      .filter(s => s !== "");
+    sheetCodeMaps[tableName] = new Set(flatCodes);
+  }
+});
 
-  // 2️⃣  Now check your payload rows against those sets
+  // 2) Now compare each payload row to the existing sheet-codes
   for (const { tableName, rows } of sheetsToPush) {
     const existing = sheetCodeMaps[tableName];
     const dupesAgainstSheet = rows
@@ -4845,11 +4725,11 @@ async function pushToDb() {
     if (dupesAgainstSheet.length) {
       const list = [...new Set(dupesAgainstSheet)].join(", ");
       alert(
-        `🚫 You have ${dupesAgainstSheet.length} new row(s) in "${tableName}" whose ` +
-        `doc_code already exists in that sheet:\n\n${list}\n\n` +
-        `Please remove or correct those before pushing.`
+        `🚫 You’re about to push ${dupesAgainstSheet.length} row(s) to "${tableName}" whose\` +
+        \` doc_code already exists:\n\n${list}\n\n` +
+        `Please fix or remove those before pushing.`
       );
-      return; // bail out of pushToDb entirely
+      return; // abort the entire push
     }
   }
 

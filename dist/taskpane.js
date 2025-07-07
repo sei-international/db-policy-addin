@@ -4124,8 +4124,7 @@ async function applyCountryValidation(sheetName) {
   await Excel.run(async ctx => {
     const sheet = ctx.workbook.worksheets.getItem(sheetName);
 
-    // figure out how many rows & locate "Country"
-    const used = sheet.getUsedRange();
+    const used    = sheet.getUsedRange();
     used.load("rowCount,columnCount");
     await ctx.sync();
 
@@ -4133,34 +4132,35 @@ async function applyCountryValidation(sheetName) {
     headerR.load("values");
     await ctx.sync();
     const headers = headerR.values[0];
-    const colIdx = headers.indexOf("Country");
+    const colIdx  = headers.indexOf("Country");
     if (colIdx < 0 || used.rowCount < 2) return;
 
-    // grab the Table and its Country column's body range
-    const cgTable = ctx.workbook.tables.getItem("tbl_CountryGroupings");
-    const countryColBody = cgTable
+    const cgTable         = ctx.workbook.tables.getItem("tbl_CountryGroupings");
+    const countryColBody  = cgTable
       .columns.getItem("Country")
       .getDataBodyRange();
-    console.log("cgTable", cgTable);
-    console.log("countryColBody", countryColBody);
-    // apply validation to this sheet's Country column (all rows)
+
+    countryColBody.load("address");
+    await ctx.sync();
+
+    const a1address = countryColBody.address;          
+    const source    = `=${a1address}`;                 
+
+    // apply to every cell in this sheet’s Country column
     const dvRange = sheet.getRangeByIndexes(
-      1,
-      colIdx,
+      1,           // start on row 2
+      colIdx,      // the Country column we found
       used.rowCount - 1,
       1
     );
-    console.log("dvRange", dvRange);
     dvRange.dataValidation.rule = {
-      list: {
-        inCellDropdown: true,
-        source: countryColBody
-      }
+      list: { inCellDropdown: true, source }
     };
 
     await ctx.sync();
   });
 }
+
 
 
 async function authFetch(url, opts = {}) {

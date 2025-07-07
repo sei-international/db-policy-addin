@@ -4808,8 +4808,7 @@ async function pushToDb() {
     return (status.innerText = "No changes detected.");
   }
 
-    // 1) Pull every sheet’s doc_code column and look for in-sheet duplicates
-  await Excel.run(async ctx => {
+  const hasInSheetDupes = await Excel.run(async ctx => {
     for (const { tableName } of sheetsToPush) {
       const displayName = tableName.replace(/_/g, " ");
       const tblName     = `tbl_${tableName}`;
@@ -4821,25 +4820,28 @@ async function pushToDb() {
       bodyRange.load("values");
       await ctx.sync();
 
-      // flatten into a simple array of trimmed codes
       const codes = bodyRange.values
         .map(r => (r[0]||"").toString().trim())
         .filter(c => c !== "");
 
-      // find any that show up more than once
       const dupes = codes.filter((c,i,a) => a.indexOf(c) !== i);
       if (dupes.length) {
         const list = [...new Set(dupes)].join(", ");
         await showMessage(
-          `🚫 Duplicate doc_code(s) detected in “${tableName}” sheet:\n\n` +
-          `${list}\n\n` +
+          `🚫 Duplicate doc_code(s) detected in “${tableName}” sheet:\n\n${list}\n\n` +
           `Please fix or remove those before pushing.`
         );
         status.innerText = "Push aborted due to duplicate entries in sheet.";
-        return;      // stop the push
+        return true;           // <— return true if we found dupes
       }
     }
+    return false;                // <— no dupes anywhere
   });
+
+  if (hasInSheetDupes) {
+    return;  // <— now actually abort the rest of pushToDb
+  }
+
 
   for (const { tableName, rows } of sheetsToPush) {
     if (!await confirmPush(`${rows.length} change(s) to "${tableName}"?`)) {

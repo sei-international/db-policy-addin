@@ -4807,12 +4807,9 @@ async function pushToDb() {
   if (!sheetsToPush.length) {
     return (status.innerText = "No changes detected.");
   }
-    // 1) Build a map of tableName → Set(existing codes)
-  const sheetCodeMaps = {};
 
+    // 1) Pull every sheet’s doc_code column and look for in-sheet duplicates
   await Excel.run(async ctx => {
-    // a) gather all the DataBodyRange objects and load their values
-    const rangesByTable = {};
     for (const { tableName } of sheetsToPush) {
       const displayName = tableName.replace(/_/g, " ");
       const tblName     = `tbl_${tableName}`;
@@ -4822,42 +4819,28 @@ async function pushToDb() {
       const col         = tbl.columns.getItem(COLUMN_MAP.doc_code);
       const bodyRange   = col.getDataBodyRange();
       bodyRange.load("values");
-      rangesByTable[tableName] = bodyRange;
-    }
+      await ctx.sync();
 
-    // b) sync once for all loads
-    await ctx.sync();
+      // flatten into a simple array of trimmed codes
+      const codes = bodyRange.values
+        .map(r => (r[0]||"").toString().trim())
+        .filter(c => c !== "");
 
-    // c) build our Sets
-    for (const [tableName, bodyRange] of Object.entries(rangesByTable)) {
-      // flatten the 2D array into a single list of codes
-      const flatCodes = bodyRange.values
-        .map(row => row[0]?.toString().trim() || "")
-        .filter(s => s !== "");
-      sheetCodeMaps[tableName] = new Set(flatCodes);
+      // find any that show up more than once
+      const dupes = codes.filter((c,i,a) => a.indexOf(c) !== i);
+      if (dupes.length) {
+        const list = [...new Set(dupes)].join(", ");
+        await showMessage(
+          `🚫 Duplicate doc_code(s) detected in “${tableName}” sheet:\n\n` +
+          `${list}\n\n` +
+          `Please fix or remove those before pushing.`
+        );
+        status.innerText = "Push aborted due to duplicate entries in sheet.";
+        return;      // stop the push
+      }
     }
   });
 
-  // 2) Now compare each payload row to the existing sheet-codes
-  for (const { tableName, rows } of sheetsToPush) {
-    const existing = sheetCodeMaps[tableName];
-    const dupesAgainstSheet = rows
-      .map(r => (r.doc_code||"").toString().trim())
-      .filter(code => existing.has(code));
-
-    if (dupesAgainstSheet.length) {
-      const list = [...new Set(dupesAgainstSheet)].join(", ");
-      await showMessage(
-        `🚫 You’re about to push ${dupesAgainstSheet.length} row(s) to “${tableName}”\n` +
-        `whose doc_code already exists:\n\n${list}\n\n` +
-        `Please fix or remove those before pushing.`
-      );
-      status.innerText = "Push aborted due to duplicate entries.";
-      return; // abort the entire push
-    }
-  }
-
-  // 3) Push each table’s changes
   for (const { tableName, rows } of sheetsToPush) {
     if (!await confirmPush(`${rows.length} change(s) to "${tableName}"?`)) {
       status.innerText = `Skipped "${tableName}".`;

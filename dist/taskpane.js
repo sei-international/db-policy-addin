@@ -4057,17 +4057,12 @@ async function getPendingRows(tableName) {
     console.log(`[DEBUG][${tableName}] headerRow =`, headerRow);
     console.log(`[DEBUG][${tableName}] headerMap =`, headerMap);
 
-    const today = new Date();
-    const formattedToday = new Intl.DateTimeFormat("en-GB", {
-      day: "numeric", month: "long", year: "numeric"
-    }).format(today);
-
     const toPush = [];
 
     dataRows.forEach((row, rowIndex) => {
       const obj     = {};
       const codeIdx = headerRow.indexOf(COLUMN_MAP.doc_code);
-      const docCode = String(row[codeIdx]||"").trim();
+      const docCode = String(row[codeIdx]||"");
       const orig    = cacheMap.get(docCode);
 
       // build payload fields
@@ -4082,15 +4077,6 @@ async function getPendingRows(tableName) {
         obj[dbCol] = val;
       });
 
-      // policies defaults
-      if (tableName==="policies" && !obj.country && obj.doc_code) {
-        const iso3 = obj.doc_code.slice(0,3).toUpperCase();
-        const grp  = COUNTRY_GROUPINGS.find(g=>g.iso3c===iso3);
-        if (grp) {
-          obj.country = grp.Country;
-        }
-      }
-
       // strip inherited on non-policies
       if (tableName!=="policies") {
         ["country","policy_year","policy_name","policy_format"].forEach(k=>{
@@ -4104,7 +4090,6 @@ async function getPendingRows(tableName) {
 
       // skip blank codes
       if (!obj.doc_code) {
-        console.groupEnd();
         return;
       }
 
@@ -4117,7 +4102,6 @@ async function getPendingRows(tableName) {
         toPush.push(obj);
         console.log("   → marked for push:", obj);
       }
-      console.groupEnd();
     });
 
     console.log(`[DEBUG][${tableName}] total toPush =`, toPush.length);

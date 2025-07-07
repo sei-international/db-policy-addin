@@ -4832,14 +4832,14 @@ async function pushToDb() {
           `Please fix or remove those before pushing.`
         );
         status.innerText = "Push aborted due to duplicate entries in sheet.";
-        return true;           // <— return true if we found dupes
+        return true;     
       }
     }
-    return false;                // <— no dupes anywhere
+    return false;         
   });
 
   if (hasInSheetDupes) {
-    return;  // <— now actually abort the rest of pushToDb
+    return; 
   }
 
 

@@ -4207,13 +4207,16 @@ async function applyCountryDropdown(sheetName) {
 
     // the “body” of that column
     const dvRange = sheet.getRangeByIndexes(1, colIdx, used.rowCount - 1, 1);
+
+    dvRange.load("address");
+    await ctx.sync();
     console.log(`[applyCountryDropdown] applying validation to range ${dvRange.address}`);
 
-    // assign the list validation pointing at our named range
+    // assign the list validation pointing at named range
     dvRange.dataValidation.rule = {
       list: {
         inCellDropdown: true,
-        source: "=CountryList"     // **note** the leading “=” is mandatory
+        source: "=CountryList"     
       }
     };
 
@@ -4226,6 +4229,7 @@ async function applyCountryDropdown(sheetName) {
   });
   console.log(`[applyCountryDropdown] done for sheet "${sheetName}"`);
 }
+
 
 
 

@@ -4147,7 +4147,7 @@ async function applyCountryValidation(sheetName) {
     await ctx.sync();
 
     // set up the validation range - Column B rows 2..last
-    const source = `'Country Groupings'!$B$2:$B$${cgUsed.rowCount}`;
+    const source = "=tbl_CountryGroupings[Country]";
     console.log("source", source);
     const dvRange = sheet.getRangeByIndexes(1, colIdx, used.rowCount - 1, 1);
     console.log("dvRange", dvRange);

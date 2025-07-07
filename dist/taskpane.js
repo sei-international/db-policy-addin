@@ -4121,66 +4121,112 @@ async function pullCountryGroupings() {
   });
 }
 async function setupCountryListName() {
+  console.log("[setupCountryListName] start");
   await Excel.run(async ctx => {
     const cg = ctx.workbook.worksheets.getItem("Country Groupings");
     const used = cg.getUsedRange();
     used.load("rowCount");
     await ctx.sync();
 
-    const listRng = cg.getRange(`B2:B${used.rowCount}`);
-    // if there’s already a name, delete it
-    const existing = ctx.workbook.names.getItemOrNullObject("CountryList");
+    const listRangeAddr = `B2:B${used.rowCount}`;
+    console.log(`[setupCountryListName] defining list from ${listRangeAddr}`);
+
+    // delete old name if it exists
+    const old = ctx.workbook.names.getItemOrNullObject("CountryList");
     await ctx.sync();
-    if (!existing.isNullObject) {
-      existing.delete();
+    if (!old.isNullObject) {
+      console.log("[setupCountryListName] deleting existing CountryList name");
+      old.delete();
       await ctx.sync();
     }
-    // add the new named range
-    ctx.workbook.names.add("CountryList", listRng);
+
+    // add new one
+    ctx.workbook.names.add("CountryList", cg.getRange(listRangeAddr));
     await ctx.sync();
+    console.log("[setupCountryListName] CountryList name created");
   });
+  console.log("[setupCountryListName] done");
+}
+
+
+
+async function setupCountryListName() {
+  console.log("[setupCountryListName] start");
+  await Excel.run(async ctx => {
+    const cg = ctx.workbook.worksheets.getItem("Country Groupings");
+    const used = cg.getUsedRange();
+    used.load("rowCount");
+    await ctx.sync();
+
+    const listRangeAddr = `B2:B${used.rowCount}`;
+    console.log(`[setupCountryListName] defining list from ${listRangeAddr}`);
+
+    // delete old name if it exists
+    const old = ctx.workbook.names.getItemOrNullObject("CountryList");
+    await ctx.sync();
+    if (!old.isNullObject) {
+      console.log("[setupCountryListName] deleting existing CountryList name");
+      old.delete();
+      await ctx.sync();
+    }
+
+    // add new one
+    ctx.workbook.names.add("CountryList", cg.getRange(listRangeAddr));
+    await ctx.sync();
+    console.log("[setupCountryListName] CountryList name created");
+  });
+  console.log("[setupCountryListName] done");
 }
 
 
 async function applyCountryDropdown(sheetName) {
+  console.log(`[applyCountryDropdown] start for sheet "${sheetName}"`);
   await Excel.run(async ctx => {
     const sheet = ctx.workbook.worksheets.getItem(sheetName);
 
-    // 1) figure out how many rows & find the Country column
+    // make sure our named range exists
+    console.log(`[applyCountryDropdown] ensuring CountryList exists`);
+    await setupCountryListName();
+
+    // figure out how many rows & which column is “Country”
     const used = sheet.getUsedRange();
     used.load("rowCount,columnCount");
     await ctx.sync();
+    console.log(`[applyCountryDropdown] sheet has ${used.rowCount} rows`);
 
-    const headerR = sheet.getRangeByIndexes(0,0,1,used.columnCount);
-    headerR.load("values");
+    const header = sheet.getRangeByIndexes(0, 0, 1, used.columnCount);
+    header.load("values");
     await ctx.sync();
-    const headers = headerR.values[0];
-    const colIdx = headers.indexOf("Country");
-    if (colIdx < 0 || used.rowCount < 2) return;
 
-    // 2) get the body of that column
-    const dvRange = sheet.getRangeByIndexes(1, colIdx, used.rowCount-1, 1);
+    const colIdx = header.values[0].indexOf("Country");
+    console.log(`[applyCountryDropdown] "Country" column index = ${colIdx}`);
+    if (colIdx < 0 || used.rowCount < 2) {
+      console.warn(`[applyCountryDropdown] no Country column or not enough rows, skipping`);
+      return;
+    }
 
-    // 3) assign a simple LIST rule pointing at our named range
+    // the “body” of that column
+    const dvRange = sheet.getRangeByIndexes(1, colIdx, used.rowCount - 1, 1);
+    console.log(`[applyCountryDropdown] applying validation to range ${dvRange.address}`);
+
+    // assign the list validation pointing at our named range
     dvRange.dataValidation.rule = {
       list: {
         inCellDropdown: true,
-        source: "=CountryList"      // note the leading =
+        source: "=CountryList"     // **note** the leading “=” is mandatory
       }
     };
 
-    // 4) turn off the error‐alert so it won’t block invalid entries
+    // allow arbitrary entries, disable the stop‐style error alert
     dvRange.dataValidation.ignoreBlanks = true;
-    dvRange.dataValidation.errorAlert = {
-      showAlert: false,
-      title:   "",
-      message: "",
-      style:   Excel.DataValidationAlertStyle.stop
-    };
+    dvRange.dataValidation.errorAlert.showAlert = false;
 
     await ctx.sync();
+    console.log(`[applyCountryDropdown] validation applied successfully`);
   });
+  console.log(`[applyCountryDropdown] done for sheet "${sheetName}"`);
 }
+
 
 
 async function authFetch(url, opts = {}) {
@@ -4619,7 +4665,6 @@ async function pullFromDb() {
         }
 
         await ctx.sync();
-        await setupCountryListName();
         await applyCountryDropdown(displayName);
       });
 
@@ -4793,7 +4838,6 @@ async function pullOneTable(tableName) {
 
     await ctx.sync();
     // enforce Country-only dropdown
-    await setupCountryListName();
     await applyCountryDropdown(displayName);
   });
 

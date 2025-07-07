@@ -4807,7 +4807,20 @@ async function pushToDb() {
   if (!sheetsToPush.length) {
     return (status.innerText = "No changes detected.");
   }
-
+  for (const { tableName, rows } of sheetsToPush) {
+    const codes = rows.map(r => (r.doc_code||"").toString().trim());
+    // find any code that shows up more than once
+    const dupes = codes.filter((c,i) => c && codes.indexOf(c) !== i);
+    if (dupes.length) {
+      const list = [...new Set(dupes)].join(", ");
+      alert(
+        `Duplicate document code(s) in your changes for "${tableName}":\n\n` +
+        `${list}\n\n` +
+        `Please fix these before pushing.`
+      );
+      return;
+    }
+  }
   // 3) Push each table’s changes
   for (const { tableName, rows } of sheetsToPush) {
     if (!await confirmPush(`${rows.length} change(s) to "${tableName}"?`)) {

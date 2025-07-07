@@ -4015,34 +4015,66 @@ function scheduleReminder(intervalMs = 30 * 60 * 1000) {
 async function hasUnpushedChanges(tableName) {
   return Excel.run(async ctx => {
     const displayName = tableName.replace(/_/g, " ");
-    const sheet = ctx.workbook.worksheets.getItemOrNullObject(displayName);
+    const sheet      = ctx.workbook.worksheets.getItemOrNullObject(displayName);
+    const tbl        = sheet.tables.getItemOrNullObject(`tbl_${tableName}`);
     const cacheSheet = ctx.workbook.worksheets.getItemOrNullObject(`__cache__${tableName}`);
     await ctx.sync();
-    if (sheet.isNullObject || cacheSheet.isNullObject) return false;
+    if (sheet.isNullObject || tbl.isNullObject || cacheSheet.isNullObject) {
+      // if no table or no cache, don’t warn
+      return false;
+    }
 
-    // read live data
-    const liveRange = sheet.getUsedRange();
-    liveRange.load("values");
-    // read cache data
-    const cacheRange = cacheSheet.getUsedRange();
-    cacheRange.load("values");
+    // 1) Load table headers and data
+    const headerRng = tbl.getHeaderRowRange();
+    const bodyRng   = tbl.getDataBodyRange();
+    headerRng.load("values");
+    bodyRng.load("values");
+    // 2) Load cache sheet values
+    const cacheRng = cacheSheet.getUsedRange();
+    cacheRng.load("values");
     await ctx.sync();
 
-    const live = liveRange.values;
-    const cache = cacheRange.values;
+    const tblHeaders = headerRng.values[0];      // e.g. ["Country","Document Code",…]
+    const liveRows   = bodyRng.values;           // [ [row1col1,row1col2,…], … ]
+    const cacheVals  = cacheRng.values;          // [ [dbCol1,dbCol2,…], [r1c1,r1c2,…], … ]
 
-    // simple deep compare
-    if (live.length !== cache.length) return true;
-    for (let r = 0; r < live.length; r++) {
-      const rowLive = live[r], rowCache = cache[r] || [];
-      if (rowLive.length !== rowCache.length) return true;
-      for (let c = 0; c < rowLive.length; c++) {
-        if (`${rowLive[c]}` !== `${rowCache[c]}`) return true;
+    if (cacheVals.length < 2) {
+      return false;
+    }
+    const cacheCols = cacheVals[0];              // e.g. ["country","doc_code",…]
+    const cacheRows = cacheVals.slice(1);
+
+    // 3) Build a map from table-column index to cacheRows-column index
+    const colMap = tblHeaders.map((disp, i) => {
+      // find which cacheCols entry corresponds to this display column
+      const dbCol = DISPLAY_TO_DB[disp] || disp;
+      return cacheCols.indexOf(dbCol);
+    });
+
+    // 4) Quick length check
+    if (liveRows.length !== cacheRows.length) {
+      return true;
+    }
+
+    // 5) Compare cell-by-cell
+    for (let r = 0; r < liveRows.length; r++) {
+      const liveRow  = liveRows[r];
+      const cacheRow = cacheRows[r];
+      for (let c = 0; c < liveRow.length; c++) {
+        const j = colMap[c];
+        const liveVal  = liveRow[c]  == null ? "" : liveRow[c].toString();
+        const cacheVal = j >= 0 && cacheRow[j] != null ? cacheRow[j].toString() : "";
+        if (liveVal !== cacheVal) {
+          return true;
+        }
       }
     }
+
+    // no differences found
     return false;
   });
 }
+
 
 function setupTabs() {
   ['connect','pull','faq'].forEach(tabKey => {

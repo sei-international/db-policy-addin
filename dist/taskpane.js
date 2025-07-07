@@ -4124,39 +4124,44 @@ async function applyCountryValidation(sheetName) {
   await Excel.run(async ctx => {
     const sheet = ctx.workbook.worksheets.getItem(sheetName);
 
-    // find how many rows you have
+    // figure out how many rows & locate "Country"
     const used = sheet.getUsedRange();
     used.load("rowCount,columnCount");
     await ctx.sync();
 
-    // find the header row and locate "Country"
     const headerR = sheet.getRangeByIndexes(0, 0, 1, used.columnCount);
     headerR.load("values");
     await ctx.sync();
     const headers = headerR.values[0];
     const colIdx = headers.indexOf("Country");
-    console.log("colIdx:", colIdx);
-    console.log("used.rowCount", used.rowCount);
     if (colIdx < 0 || used.rowCount < 2) return;
 
-    // find last row in the Country Groupings sheet
-    const cg = ctx.workbook.worksheets.getItem("Country Groupings");
-    const cgUsed = cg.getUsedRange();
-    console.log("cgUsed", cgUsed);
-    cgUsed.load("rowCount");
-    await ctx.sync();
-
-    // set up the validation range - Column B rows 2..last
-    const source = "=tbl_CountryGroupings[Country]";
-    console.log("source", source);
-    const dvRange = sheet.getRangeByIndexes(1, colIdx, used.rowCount - 1, 1);
+    // grab the Table and its Country column's body range
+    const cgTable = ctx.workbook.tables.getItem("tbl_CountryGroupings");
+    const countryColBody = cgTable
+      .columns.getItem("Country")
+      .getDataBodyRange();
+    console.log("cgTable", cgTable);
+    console.log("countryColBody", countryColBody);
+    // apply validation to this sheet's Country column (all rows)
+    const dvRange = sheet.getRangeByIndexes(
+      1,
+      colIdx,
+      used.rowCount - 1,
+      1
+    );
     console.log("dvRange", dvRange);
     dvRange.dataValidation.rule = {
-      list: { inCellDropdown: true, source }
+      list: {
+        inCellDropdown: true,
+        source: countryColBody
+      }
     };
+
     await ctx.sync();
   });
 }
+
 
 async function authFetch(url, opts = {}) {
   const token = await getToken().catch(err => {

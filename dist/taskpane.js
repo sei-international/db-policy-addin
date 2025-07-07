@@ -4028,7 +4028,12 @@ async function getPendingRows(tableName) {
 
   return Excel.run(async ctx => {
     const displayName = tableName.replace(/_/g, " ");
-    const sheet       = ctx.workbook.worksheets.getItem(displayName);
+    const sheet = ctx.workbook.worksheets.getItemOrNullObject(displayName);
+    await ctx.sync();
+    if (sheet.isNullObject) {
+      console.log(`[DEBUG][${tableName}] ${displayName} sheet not found → no pending rows`);
+      return [];
+    }
     const usedRange   = sheet.getUsedRange().load("values");
     const cacheSheet  = ctx.workbook.worksheets.getItemOrNullObject(`__cache__${tableName}`);
     await ctx.sync();

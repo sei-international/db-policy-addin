@@ -4085,9 +4085,6 @@ async function getPendingRows(tableName) {
           }
         });
       }
-
-      obj.date_entry = formattedToday;
-
       // skip blank codes
       if (!obj.doc_code) {
         return;
@@ -4096,7 +4093,7 @@ async function getPendingRows(tableName) {
       // detect changes
       const isNew = !orig;
       const hasDelta = Object.entries(obj).some(([k,v]) => 
-        k!=="date_entry" && String((orig && orig[k])||"") !== String(v||"")
+        String((orig && orig[k])||"") !== String(v||"")
       );
       if (isNew || hasDelta) {
         toPush.push(obj);

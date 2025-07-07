@@ -4807,22 +4807,52 @@ async function pushToDb() {
   if (!sheetsToPush.length) {
     return (status.innerText = "No changes detected.");
   }
+  const sheetCodeMaps = {}; // { tableName: Set(existingDocCodes) }
+  await Excel.run(async ctx => {
+    for (const { tableName } of sheetsToPush) {
+      const displayName = tableName.replace(/_/g, " ");
+      const tblName     = `tbl_${tableName}`;
+      const sheet       = ctx.workbook.worksheets.getItem(displayName);
+      const tbl         = sheet.tables.getItem(tblName);
+
+      // grab the “Document Code” column in that table
+      const codeHeader = COLUMN_MAP.doc_code;       // e.g. "Document Code"
+      const col         = tbl.columns.getItem(codeHeader);
+      const bodyRange   = col.getDataBodyRange();
+      bodyRange.load("values");
+    }
+    await ctx.sync();
+
+    // build our sets
+    for (const { tableName } of sheetsToPush) {
+      const displayName = tableName.replace(/_/g, " ");
+      const tblName     = `tbl_${tableName}`;
+      const sheet       = ctx.workbook.worksheets.getItem(displayName);
+      const tbl         = sheet.tables.getItem(tblName);
+      const col         = tbl.columns.getItem(COLUMN_MAP.doc_code);
+      const vals        = col.getDataBodyRange().values.flat().map(v => (v||"").toString().trim());
+      sheetCodeMaps[tableName] = new Set(vals);
+    }
+  });
+
+  // 2️⃣  Now check your payload rows against those sets
   for (const { tableName, rows } of sheetsToPush) {
-    const codes = rows.map(r => (r.doc_code||"").toString().trim());
-    console.log("codes", codes)
-    // find any code that shows up more than once
-    const dupes = codes.filter((c,i) => c && codes.indexOf(c) !== i);
-    console.log("dupes",dupes);
-    if (dupes.length) {
-      const list = [...new Set(dupes)].join(", ");
+    const existing = sheetCodeMaps[tableName];
+    const dupesAgainstSheet = rows
+      .map(r => (r.doc_code||"").toString().trim())
+      .filter(code => existing.has(code));
+
+    if (dupesAgainstSheet.length) {
+      const list = [...new Set(dupesAgainstSheet)].join(", ");
       alert(
-        `Duplicate document code(s) in your changes for "${tableName}":\n\n` +
-        `${list}\n\n` +
-        `Please fix these before pushing.`
+        `🚫 You have ${dupesAgainstSheet.length} new row(s) in "${tableName}" whose ` +
+        `doc_code already exists in that sheet:\n\n${list}\n\n` +
+        `Please remove or correct those before pushing.`
       );
-      return;
+      return; // bail out of pushToDb entirely
     }
   }
+
   // 3) Push each table’s changes
   for (const { tableName, rows } of sheetsToPush) {
     if (!await confirmPush(`${rows.length} change(s) to "${tableName}"?`)) {

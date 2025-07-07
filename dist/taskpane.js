@@ -4474,8 +4474,10 @@ async function pullFromDb() {
             }
 
           // 1) grab the table we just created
-          const tbl     = sheet.tables.getItem(displayName);
-
+          const safeName = displayName.trim().toLowerCase().replace(/\s+/g, "_");
+          const tblName  = `tbl_${safeName}`;
+          const tbl     = sheet.tables.getItem(tblName);
+          
           // 2) figure out the display name of the doc‐code column
           const docCodeHeader = COLUMN_MAP.doc_code; // should be "Document Code"
           
@@ -4488,7 +4490,7 @@ async function pullFromDb() {
           bodyRange.dataValidation.rule = {
             custom: {
               // structured reference avoids having to calculate A1 addresses
-              formula1: `=COUNTIF(${tableName}[${docCodeHeader}],[@[${docCodeHeader}]])=1`
+              formula1: `=COUNTIF(${tblName}[${docCodeHeader}],[@[${docCodeHeader}]])=1`
             },
             showErrorMessage: true,
             errorTitle: "Duplicate Document Code",
@@ -4661,7 +4663,7 @@ async function pullOneTable(tableName) {
           };
         }
           // 1) grab the table we just created
-        const tbl     = sheet.tables.getItem(displayName);
+        const tbl     = sheet.tables.getItem(tblName);
 
         // 2) figure out the display name of the doc‐code column
         const docCodeHeader = COLUMN_MAP.doc_code; // should be "Document Code"
@@ -4675,7 +4677,7 @@ async function pullOneTable(tableName) {
         bodyRange.dataValidation.rule = {
           custom: {
             // structured reference avoids having to calculate A1 addresses
-            formula1: `=COUNTIF(${tableName}[${docCodeHeader}],[@[${docCodeHeader}]])=1`
+            formula1: `=COUNTIF(${tblName}[${docCodeHeader}],[@[${docCodeHeader}]])=1`
           },
           showErrorMessage: true,
           errorTitle: "Duplicate Document Code",

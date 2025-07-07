@@ -4176,14 +4176,27 @@ async function applyCountryValidation(sheetName) {
       }
     };
 
-    // 5) suppress errors on existing values—but keep the dropdown for new edits
-    dvRange.dataValidation.ignoreBlanks = true;
-    dvRange.dataValidation.errorAlert = {
-      showAlert: false,
-      title:     "",
-      message:   "",
-      style:     Excel.DataValidationAlertStyle.stop
+    // force every entry to match CountryList, show a prompt,
+    // and block anything else with an error-popup:
+    dvRange.dataValidation.rule = {
+      list: {
+        inCellDropdown: true,
+        source:         "=CountryList"
+      }
     };
+    dvRange.dataValidation.ignoreBlanks = false;
+    dvRange.dataValidation.prompt = {
+      showPrompt: true,
+      title:      "Pick a country",
+      message:    "Start typing... autocomplete & drop-down will appear."
+    };
+    dvRange.dataValidation.errorAlert = {
+      showAlert: true,
+      style:     Excel.DataValidationAlertStyle.stop,
+      title:     "Invalid country",
+      message:   "Please select a country from the list."
+    };
+
 
     await ctx.sync();
   });

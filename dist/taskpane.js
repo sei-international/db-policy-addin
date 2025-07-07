@@ -4071,24 +4071,15 @@ async function getPendingRows(tableName) {
       const orig    = cacheMap.get(docCode);
 
       // build payload fields
-      row.forEach((cellValue, colIdx) => {
-        const dbCol = headerMap[colIdx];
-        if (!dbCol)                return console.log(`   skip colIdx=${colIdx} (no mapping)`);
-        if (!dbCols.includes(dbCol)) return console.log(`   skip "${dbCol}" (not in dbCols)`);
-        if (dbCol==="hyperlink" && tableName!=="policies") 
-                                   return console.log(`   skip hyperlink on non-policies`);
+      row.forEach((val, idx) => {
+        const dbCol = headerMap[idx];
+        if (
+          !dbCol ||
+          dbCol === "hyperlink"   || 
+          dbCol === "date_entry"      
+        ) return;
 
-        if (dbCol==="hyperlink") {
-          if (typeof cellValue==="string" && (cellValue.startsWith("http")||cellValue==="")) {
-            obj.hyperlink = cellValue;
-            console.log(`   obj.hyperlink ← "${cellValue}"`);
-          } else if (orig && orig.hyperlink) {
-            obj.hyperlink = orig.hyperlink;
-            console.log(`   obj.hyperlink ← orig.hyperlink "${orig.hyperlink}"`);
-          }
-        } else {
-          obj[dbCol] = cellValue;
-        }
+        obj[dbCol] = val;
       });
 
       // policies defaults
@@ -4105,7 +4096,6 @@ async function getPendingRows(tableName) {
         ["country","policy_year","policy_name","policy_format"].forEach(k=>{
           if (obj[k] !== undefined) {
             delete obj[k];
-            console.log(`   deleted inherited ${k}`);
           }
         });
       }

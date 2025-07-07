@@ -4013,95 +4013,120 @@ function scheduleReminder(intervalMs = 30 * 60 * 1000) {
   }, intervalMs);
 }
 async function getPendingRows(tableName) {
-  const pending = await Excel.run(async ctx => {
+  // 1) load the “true” column list for this table
+  let dbCols;
+  try {
+    const colsRes = await authFetch(
+      `${apiBase}/columns?table=${encodeURIComponent(tableName)}`, 
+      { method: "GET" }
+    );
+    if (!colsRes.ok) throw new Error(await colsRes.text());
+    dbCols = await colsRes.json();
+  } catch (e) {
+    console.error(`❌ getPendingRows: could not load columns for ${tableName}`, e);
+    return [];
+  }
+
+  // 2) now build the “toPush” array exactly as pushToDb does
+  return Excel.run(async ctx => {
     const displayName = tableName.replace(/_/g, " ");
     const sheet       = ctx.workbook.worksheets.getItem(displayName);
     const tbl         = sheet.tables.getItem(`tbl_${tableName}`);
     const cacheSheet  = ctx.workbook.worksheets.getItemOrNullObject(`__cache__${tableName}`);
     await ctx.sync();
-    
-    // Build a quick Map<doc_code, cacheRowObject>
+
+    // BUILD cacheMap<doc_code, record>
     const cacheMap = new Map();
     if (!cacheSheet.isNullObject) {
       const used = cacheSheet.getUsedRange().load("values");
       await ctx.sync();
-      const [headerRow, ...dataRows] = used.values || [];
-      const cacheKeys = headerRow.map(h => h.toLowerCase());
-      dataRows.forEach(r => {
+      const [hdr, ...data] = used.values || [];
+      const keys = hdr.map(h=>h.toLowerCase());
+      data.forEach(r=>{
         const o = {};
-        cacheKeys.forEach((k,i) => o[k] = r[i]);
+        keys.forEach((k,i)=>o[k]=r[i]);
         cacheMap.set(o.doc_code, o);
       });
     }
 
-    // Pull live values
+    // LOAD table header+body (so headers[idx] ↔ row[idx])
     const headerRange = tbl.getHeaderRowRange().load("values");
     const bodyRange   = tbl.getDataBodyRange().load("values");
     await ctx.sync();
-    
-    // now headers and rows line up 1-for-1
-    const headers = headerRange.values[0];
-    const allRows = bodyRange.values;
-    const headerMap = headers.map(h => DISPLAY_TO_DB[h] || h);
 
-    // Build the “toPush” list exactly as in pushToDb
-    const toPush = [];
-    const today = new Date();
+    const headers   = headerRange.values[0];
+    const allRows   = bodyRange.values;
+    const headerMap = headers.map(h=> DISPLAY_TO_DB[h]||h);
+
+    // make today’s date string
     const formattedToday = new Intl.DateTimeFormat("en-GB", {
       day: "numeric", month: "long", year: "numeric"
-    }).format(today);
+    }).format(new Date());
+
+    const toPush = [];
 
     for (const row of allRows) {
-      const obj = {};
-      const docCode = String(row[ headers.indexOf(COLUMN_MAP.doc_code) ] || "").trim();
-      const orig    = cacheMap.get(docCode) || {};
+      const obj     = {};
+      const codeIdx = headers.indexOf(COLUMN_MAP.doc_code);
+      const docCode = String(row[codeIdx]||"").trim();
+      const orig    = cacheMap.get(docCode);    // *undefined* if new
 
-      row.forEach((val, idx) => {
-        const dbCol = headerMap[idx];
-        if (!dbCol) return;
-        // never blow away existing hyperlink on non‐policies sheets:
+      // build each field just like pushToDb
+      row.forEach((cellValue, colIdx) => {
+        const dbCol = headerMap[colIdx];
+        // same guards
+        if (!dbCol || !dbCols.includes(dbCol)) return;
         if (dbCol === "hyperlink" && tableName !== "policies") return;
 
-        // only URLs or blanks override on hyperlink fields
         if (dbCol === "hyperlink") {
-          if (typeof val === "string" && (val.startsWith("http") || val === "")) {
-            obj.hyperlink = val;
-          } else if (orig.hyperlink) {
+          if (typeof cellValue === "string" &&
+              (cellValue.startsWith("http") || cellValue === "")
+          ) {
+            obj.hyperlink = cellValue;
+          } else if (orig && orig.hyperlink) {
             obj.hyperlink = orig.hyperlink;
           }
         } else {
-          obj[dbCol] = val;
+          obj[dbCol] = cellValue;
         }
       });
 
       // inherited defaults on policies
       if (tableName === "policies" && !obj.country && obj.doc_code) {
         const iso3 = obj.doc_code.slice(0,3).toUpperCase();
-        const grp = COUNTRY_GROUPINGS.find(g=>g.iso3c===iso3);
+        const grp  = COUNTRY_GROUPINGS.find(g=>g.iso3c===iso3);
         if (grp) obj.country = grp.Country;
       }
 
-      // strip inherited fields on non‐policies
+      // strip inherited fields on non-policies
       if (tableName !== "policies") {
         ["country","policy_year","policy_name","policy_format"]
           .forEach(k=>delete obj[k]);
       }
 
+      // always stamp date_entry
       obj.date_entry = formattedToday;
+
+      // nothing to do for blank rows
       if (!obj.doc_code) continue;
 
-      // compare to cache (ignore date_entry)
-      const changed = !orig.doc_code || Object
-        .entries(obj)
-        .some(([k,v])=> k!=="date_entry" && String(orig[k]||"")!==String(v||""));
-      if (changed) toPush.push(obj);
+      // same “changed?” test
+      const isNew     = !orig;
+      const hasDelta  = Object
+        .keys(obj)
+        .some(k=>
+          k !== "date_entry" &&
+          String((orig && orig[k])||"") !== String(obj[k]||"")
+        );
+      if (isNew || hasDelta) {
+        toPush.push(obj);
+      }
     }
 
     return toPush;
   });
-
-  return pending;
 }
+
 
 async function hasUnpushedChanges(tableName) {
   const rows = await getPendingRows(tableName);

@@ -4012,6 +4012,37 @@ function scheduleReminder(intervalMs = 30 * 60 * 1000) {
     showReminderModal();
   }, intervalMs);
 }
+async function hasUnpushedChanges(tableName) {
+  return Excel.run(async ctx => {
+    const displayName = tableName.replace(/_/g, " ");
+    const sheet = ctx.workbook.worksheets.getItemOrNullObject(displayName);
+    const cacheSheet = ctx.workbook.worksheets.getItemOrNullObject(`__cache__${tableName}`);
+    await ctx.sync();
+    if (sheet.isNullObject || cacheSheet.isNullObject) return false;
+
+    // read live data
+    const liveRange = sheet.getUsedRange();
+    liveRange.load("values");
+    // read cache data
+    const cacheRange = cacheSheet.getUsedRange();
+    cacheRange.load("values");
+    await ctx.sync();
+
+    const live = liveRange.values;
+    const cache = cacheRange.values;
+
+    // simple deep compare
+    if (live.length !== cache.length) return true;
+    for (let r = 0; r < live.length; r++) {
+      const rowLive = live[r], rowCache = cache[r] || [];
+      if (rowLive.length !== rowCache.length) return true;
+      for (let c = 0; c < rowLive.length; c++) {
+        if (`${rowLive[c]}` !== `${rowCache[c]}`) return true;
+      }
+    }
+    return false;
+  });
+}
 
 function setupTabs() {
   ['connect','pull','faq'].forEach(tabKey => {
@@ -4349,6 +4380,16 @@ async function pullFromDb() {
 
   // 2) Loop through each table
   for (const tableName of checked) {
+    if (await hasUnpushedChanges(tableName)) {
+      const cont = await askConfirm(
+        `You have local changes in "${tableName}" that haven’t been pushed yet. ` +
+        `Pulling now will overwrite them. Do you want to proceed with the pull?`
+      );
+      if (!cont) {
+        status.innerText = `Pull canceled for "${tableName}".`;
+        continue;
+      }
+    }
     status.innerText = `Loading columns for "${tableName}"…`;
 
     try {

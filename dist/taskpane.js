@@ -4022,7 +4022,6 @@ async function getPendingRows(tableName) {
     );
     dbCols = await colsRes.json();
   } catch (e) {
-    console.error(`[DEBUG][${tableName}] failed to load dbCols:`, e);
     return [];
   }
   console.log(`[DEBUG][${tableName}] dbCols =`, dbCols);
@@ -4071,9 +4070,6 @@ async function getPendingRows(tableName) {
       const docCode = String(row[codeIdx]||"").trim();
       const orig    = cacheMap.get(docCode);
 
-      console.group(`[DEBUG][${tableName}] row #${rowIndex+1} (doc_code=${docCode})`);
-      console.log("  orig from cache =", orig);
-
       // build payload fields
       row.forEach((cellValue, colIdx) => {
         const dbCol = headerMap[colIdx];
@@ -4092,7 +4088,6 @@ async function getPendingRows(tableName) {
           }
         } else {
           obj[dbCol] = cellValue;
-          console.log(`   obj.${dbCol} ←`, cellValue);
         }
       });
 
@@ -4102,7 +4097,6 @@ async function getPendingRows(tableName) {
         const grp  = COUNTRY_GROUPINGS.find(g=>g.iso3c===iso3);
         if (grp) {
           obj.country = grp.Country;
-          console.log(`   obj.country defaulted to`, grp.Country);
         }
       }
 
@@ -4117,11 +4111,9 @@ async function getPendingRows(tableName) {
       }
 
       obj.date_entry = formattedToday;
-      console.log(`   obj.date_entry ←`, formattedToday);
 
       // skip blank codes
       if (!obj.doc_code) {
-        console.log("   skip: no doc_code");
         console.groupEnd();
         return;
       }
@@ -4131,13 +4123,9 @@ async function getPendingRows(tableName) {
       const hasDelta = Object.entries(obj).some(([k,v]) => 
         k!=="date_entry" && String((orig && orig[k])||"") !== String(v||"")
       );
-      console.log(`   isNew=${isNew}, hasDelta=${hasDelta}`);
-
       if (isNew || hasDelta) {
         toPush.push(obj);
         console.log("   → marked for push:", obj);
-      } else {
-        console.log("   → no change");
       }
       console.groupEnd();
     });

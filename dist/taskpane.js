@@ -4458,10 +4458,10 @@ async function pullFromDb() {
 
         // show a stop-style error if the rule is violated
         codeRange.dataValidation.errorAlert = {
-          showError:   true,
-          errorStyle:  Excel.DataValidationErrorStyle.stop,
-          errorTitle:  "Duplicate doc_code",
-          errorMessage:"That doc_code already exists in this sheet. Please enter a unique code."
+          showAlert:   true,                                       
+          alertStyle:  Excel.DataValidationAlertStyle.stop,    
+          alertTitle:  "Duplicate doc_code",                   
+          alertMessage:"That doc_code already exists in this sheet. Please enter a unique code." 
         };
 
         await ctx.sync();
@@ -4647,10 +4647,10 @@ async function pullOneTable(tableName) {
 
     // show a stop-style error if the rule is violated
     codeRange.dataValidation.errorAlert = {
-      showError:   true,
-      errorStyle:  Excel.DataValidationErrorStyle.stop,
-      errorTitle:  "Duplicate doc_code",
-      errorMessage:"That doc_code already exists in this sheet. Please enter a unique code."
+      showAlert:   true,                                         
+      alertStyle:  Excel.DataValidationAlertStyle.stop,      
+      alertTitle:  "Duplicate doc_code",                    
+      alertMessage:"That doc_code already exists in this sheet. Please enter a unique code." 
     };
 
     await ctx.sync();

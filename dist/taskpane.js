@@ -4020,58 +4020,54 @@ async function hasUnpushedChanges(tableName) {
     const cacheSheet = ctx.workbook.worksheets.getItemOrNullObject(`__cache__${tableName}`);
     await ctx.sync();
     if (sheet.isNullObject || tbl.isNullObject || cacheSheet.isNullObject) {
-      // if no table or no cache, don’t warn
+      // nothing to compare
       return false;
     }
 
-    // 1) Load table headers and data
-    const headerRng = tbl.getHeaderRowRange();
-    const bodyRng   = tbl.getDataBodyRange();
-    headerRng.load("values");
-    bodyRng.load("values");
-    // 2) Load cache sheet values
-    const cacheRng = cacheSheet.getUsedRange();
-    cacheRng.load("values");
+    // load header + body of live table
+    const hdrLive = tbl.getHeaderRowRange().load("values");
+    const bodyLive= tbl.getDataBodyRange().load("values");
+    // load cache (first row is header, rest is data)
+    const cacheRg = cacheSheet.getUsedRange().load("values");
     await ctx.sync();
 
-    const tblHeaders = headerRng.values[0];      // e.g. ["Country","Document Code",…]
-    const liveRows   = bodyRng.values;           // [ [row1col1,row1col2,…], … ]
-    const cacheVals  = cacheRng.values;          // [ [dbCol1,dbCol2,…], [r1c1,r1c2,…], … ]
+    const liveCols = hdrLive.values[0];
+    const liveRows = bodyLive.values;
+    const cacheAll = cacheRg.values;
+    if (cacheAll.length < 2) return false;  // no cache data
 
-    if (cacheVals.length < 2) {
-      return false;
-    }
-    const cacheCols = cacheVals[0];              // e.g. ["country","doc_code",…]
-    const cacheRows = cacheVals.slice(1);
+    const cacheCols = cacheAll[0];
+    const cacheRows = cacheAll.slice(1);
 
-    // 3) Build a map from table-column index to cacheRows-column index
-    const colMap = tblHeaders.map((disp, i) => {
-      // find which cacheCols entry corresponds to this display column
-      const dbCol = DISPLAY_TO_DB[disp] || disp;
-      return cacheCols.indexOf(dbCol);
+    // build a map from live-col-idx > cache-col-idx, -1 if not present
+    const colMap = liveCols.map((disp, i) => {
+      const db    = DISPLAY_TO_DB[disp] || disp;
+      return cacheCols.indexOf(db);
     });
 
-    // 4) Quick length check
-    if (liveRows.length !== cacheRows.length) {
+    // if the *number* of non-blank live rows differs from cache, have a change
+    const nonBlankLiveCount = liveRows.filter(r => r.some(c => c != null && String(c).trim() !== "")).length;
+    const nonBlankCacheCount= cacheRows.filter(r=> r.some(c => c != null && String(c).trim() !== "")).length;
+    if (nonBlankLiveCount !== nonBlankCacheCount) {
       return true;
     }
 
-    // 5) Compare cell-by-cell
+    // compare each cell in columns that exist in both
     for (let r = 0; r < liveRows.length; r++) {
-      const liveRow  = liveRows[r];
-      const cacheRow = cacheRows[r];
-      for (let c = 0; c < liveRow.length; c++) {
+      const live = liveRows[r];
+      const cache= cacheRows[r] || [];
+      for (let c = 0; c < live.length; c++) {
         const j = colMap[c];
-        const liveVal  = liveRow[c]  == null ? "" : liveRow[c].toString();
-        const cacheVal = j >= 0 && cacheRow[j] != null ? cacheRow[j].toString() : "";
-        if (liveVal !== cacheVal) {
+        if (j < 0) continue;         // skip columns with no cache counterpart
+        const a = (live[c]  == null ? "" : String(live[c]).trim());
+        const b = (cache[j] == null ? "" : String(cache[j]).trim());
+        if (a !== b) {
           return true;
         }
       }
     }
 
-    // no differences found
-    return false;
+    return false;  // nothing different
   });
 }
 

@@ -4472,8 +4472,7 @@ async function pullFromDb() {
                 list: { inCellDropdown: true, source: src }
               };
             }
-          sheet.load("name");
-          await ctx.sync();
+
           // 1) grab the table we just created
           const tbl     = sheet.tables.getItem(displayName);
 
@@ -4489,7 +4488,7 @@ async function pullFromDb() {
           bodyRange.dataValidation.rule = {
             custom: {
               // structured reference avoids having to calculate A1 addresses
-              formula1: `=COUNTIF(${tblName}[${docCodeHeader}],[@[${docCodeHeader}]])=1`
+              formula1: `=COUNTIF(${tableName}[${docCodeHeader}],[@[${docCodeHeader}]])=1`
             },
             showErrorMessage: true,
             errorTitle: "Duplicate Document Code",
@@ -4676,7 +4675,7 @@ async function pullOneTable(tableName) {
         bodyRange.dataValidation.rule = {
           custom: {
             // structured reference avoids having to calculate A1 addresses
-            formula1: `=COUNTIF(${tblName}[${docCodeHeader}],[@[${docCodeHeader}]])=1`
+            formula1: `=COUNTIF(${tableName}[${docCodeHeader}],[@[${docCodeHeader}]])=1`
           },
           showErrorMessage: true,
           errorTitle: "Duplicate Document Code",

@@ -4120,6 +4120,40 @@ async function pullCountryGroupings() {
     await ctx.sync();
   });
 }
+async function applyCountryValidation(sheetName) {
+  await Excel.run(async ctx => {
+    const sheet = ctx.workbook.worksheets.getItem(sheetName);
+
+    // find how many rows you have
+    const used = sheet.getUsedRange();
+    used.load("rowCount,columnCount");
+    await ctx.sync();
+
+    // find the header row and locate "Country"
+    const headerR = sheet.getRangeByIndexes(0, 0, 1, used.columnCount);
+    headerR.load("values");
+    await ctx.sync();
+    const headers = headerR.values[0];
+    const colIdx = headers.indexOf("Country");
+    if (colIdx < 0 || used.rowCount < 2) return;
+
+    // find last row in the Country Groupings sheet
+    const cg = ctx.workbook.worksheets.getItem("Country Groupings");
+    const cgUsed = cg.getUsedRange();
+    cgUsed.load("rowCount");
+    await ctx.sync();
+
+    // set up the validation range - Column B rows 2..last
+    const source = `'Country Groupings'!$B$2:$B$${cgUsed.rowCount}`;
+    const dvRange = sheet.getRangeByIndexes(1, colIdx, used.rowCount - 1, 1);
+
+    dvRange.dataValidation.rule = {
+      list: { inCellDropdown: true, source }
+    };
+    await ctx.sync();
+  });
+}
+
 async function authFetch(url, opts = {}) {
   const token = await getToken().catch(err => {
     console.error("❌ Failed to get token:", err);
@@ -4556,6 +4590,7 @@ async function pullFromDb() {
         }
 
         await ctx.sync();
+        await applyCountryValidation(displayName);
       });
 
       status.innerText = "Adding Country Groupings sheet…";
@@ -4727,6 +4762,8 @@ async function pullOneTable(tableName) {
     }
 
     await ctx.sync();
+    // enforce Country-only dropdown
+    await applyCountryValidation(displayName);
   });
 
   return rows.length;
@@ -4820,7 +4857,7 @@ async function pushToDb() {
           if (!dbCol || !dbCols.includes(dbCol)) return;
       
           if (dbCol === "hyperlink") {
-            // only overwrite if the user actually typed/pasted a valid URL (or cleared it)
+            // only overwrite if the user actually typed/pasted a valid URL or cleared it
             if (typeof cellValue === "string" && (cellValue.startsWith("http") || cellValue === "")) {
               obj.hyperlink = cellValue;
             } else if (cacheEntry.hyperlink) {

@@ -4628,6 +4628,7 @@ async function pullFromDb() {
         }
 
         await ctx.sync();
+        await setupCountryListName();
         await applyCountryValidation(displayName);
       });
 
@@ -4801,6 +4802,7 @@ async function pullOneTable(tableName) {
 
     await ctx.sync();
     // enforce Country-only dropdown
+    await setupCountryListName();
     await applyCountryValidation(displayName);
   });
 

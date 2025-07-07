@@ -4472,7 +4472,8 @@ async function pullFromDb() {
                 list: { inCellDropdown: true, source: src }
               };
             }
-
+          sheet.load("name");
+          await ctx.sync();
           // 1) grab the table we just created
           const tblName = `tbl_${sheet.name.trim().toLowerCase().replace(/\s+/g,'_')}`;
           const tbl     = sheet.tables.getItem(tblName);
@@ -4661,7 +4662,8 @@ async function pullOneTable(tableName) {
             list: { inCellDropdown: true, source: src }
           };
         }
-          // 1) grab the table we just created
+        sheet.load("name");
+        await ctx.sync();
         const tblName = `tbl_${sheet.name.trim().toLowerCase().replace(/\s+/g,'_')}`;
         const tbl     = sheet.tables.getItem(tblName);
 

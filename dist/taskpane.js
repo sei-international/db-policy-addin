@@ -4472,31 +4472,6 @@ async function pullFromDb() {
                 list: { inCellDropdown: true, source: src }
               };
             }
-
-          // 1) grab the table we just created
-          const safeName = displayName.trim().toLowerCase().replace(/\s+/g, "_");
-          const tblName  = `tbl_${safeName}`;
-          const tbl     = sheet.tables.getItem(tblName);
-          
-          // 2) figure out the display name of the doc‐code column
-          const docCodeHeader = COLUMN_MAP.doc_code; // should be "Document Code"
-          console.log("docCodeHeader", docCodeHeader);
-          // 3) get that column’s data‐body range
-          const col = tbl.columns.getItem(docCodeHeader);
-          console.log("col", col);
-          const bodyRange = col.getDataBodyRange();
-
-          // 4) apply a custom COUNTIF validation against the entire column
-          bodyRange.dataValidation.ignoreBlanks = true;
-          bodyRange.dataValidation.rule = {
-            custom: {
-              // structured reference avoids having to calculate A1 addresses
-              formula1: `=COUNTIF(${tblName}[${docCodeHeader}],[@[${docCodeHeader}]])=1`
-            },
-            showErrorMessage: true,
-            errorTitle: "Duplicate Document Code",
-            error: "That code already exists in this sheet—please enter a unique code."
-          };
           await ctx.sync();
         });
 
@@ -4663,28 +4638,7 @@ async function pullOneTable(tableName) {
             list: { inCellDropdown: true, source: src }
           };
         }
-          // 1) grab the table we just created
-        const tbl     = sheet.tables.getItem(tblName);
 
-        // 2) figure out the display name of the doc‐code column
-        const docCodeHeader = COLUMN_MAP.doc_code; // should be "Document Code"
-        console.log("docCodeHeader", docCodeHeader);
-        // 3) get that column’s data‐body range
-        const col = tbl.columns.getItem(docCodeHeader);
-        console.log("col", col);
-        const bodyRange = col.getDataBodyRange();
-
-        // 4) apply a custom COUNTIF validation against the entire column
-        bodyRange.dataValidation.ignoreBlanks = true;
-        bodyRange.dataValidation.rule = {
-          custom: {
-            // structured reference avoids having to calculate A1 addresses
-            formula1: `=COUNTIF(${tblName}[${docCodeHeader}],[@[${docCodeHeader}]])=1`
-          },
-          showErrorMessage: true,
-          errorTitle: "Duplicate Document Code",
-          error: "That code already exists in this sheet—please enter a unique code."
-        };
         await ctx.sync();
       });
 

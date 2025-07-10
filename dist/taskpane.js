@@ -3934,12 +3934,100 @@ const COLUMN_MAP = {
 
 
 };
-
+let ignoreEdits = false;
+let _processingChange = false;
 let _tokenCache = {
   token: null,
   expiresAt: 0
 };
+let editedRows = new Set();
+async function handleSheetChange(event) {
+  if (ignoreEdits || _processingChange) return;
+  _processingChange = true;
 
+  try {
+    await Excel.run(async ctx => {
+      // 1) get the active sheet's name
+      const sheet = ctx.workbook.worksheets.getItem(event.worksheetId);
+      sheet.load("name");
+      await ctx.sync();
+      const tableName = sheet.name.replace(/\s+/g, "_").toLowerCase();
+      console.log("active table:", tableName);
+
+      // 2) load exactly the changed range
+      const changedRange = event.getRange(ctx);
+      changedRange.load([
+        "rowIndex", "columnIndex",
+        "rowCount", "columnCount",
+        "values"
+      ]);
+      await ctx.sync();
+      const {
+        rowIndex, columnIndex,
+        rowCount, columnCount,
+        values
+      } = changedRange;
+
+      // 3) load just that slice of the header row
+      const headerRange = sheet.getRangeByIndexes(
+        0,                // first row
+        columnIndex,      // start at the same column as the change
+        1,                // one row high
+        columnCount       // as many cols as changedRange
+      );
+      headerRange.load("values");
+      await ctx.sync();
+      // map display names → db columns
+      const headerMap = headerRange.values[0].map(
+        h => DISPLAY_TO_DB[h] || h
+      );
+
+      // 4) grab the cache for this table
+      const cacheSheet = ctx.workbook.worksheets
+        .getItemOrNullObject(`__cache__${tableName}`);
+      await ctx.sync();
+      if (cacheSheet.isNullObject) {
+        console.log("no cache found for", tableName);
+        return;
+      }
+      const cacheRange = cacheSheet.getUsedRange();
+      cacheRange.load("values");
+      await ctx.sync();
+      const cacheValues = cacheRange.values;
+
+      // 5) compare cell-by-cell, skipping hyperlink & date_entry
+      for (let dr = 0; dr < rowCount; dr++) {
+        for (let dc = 0; dc < columnCount; dc++) {
+          const dbCol = headerMap[dc];
+          if (dbCol === "hyperlink" || dbCol === "date_entry") {
+            continue;
+          }
+          const newVal = values[dr][dc];
+          const oldVal = cacheValues[rowIndex + dr][columnIndex + dc];
+          if (String(newVal) !== String(oldVal)) {
+            editedRows.add(rowIndex + dr + 1);
+            break;
+          }
+        }
+      }
+
+      console.log("distinct real edits:", Array.from(editedRows));
+      if (editedRows.size >= 10) {
+        showEditWarningModal();
+      }
+    });
+  } catch (e) {
+    console.error("handleSheetChange threw:", e);
+  } finally {
+    _processingChange = false;
+  }
+}
+function showEditWarningModal() {
+  document.getElementById("editWarningModal").classList.add("visible");
+}
+function hideEditWarningModal() {
+  document.getElementById("editWarningModal").classList.remove("visible");
+}
 async function getToken() {
   // 1) if we still have a valid token, just return it
   if (_tokenCache.token && Date.now() < _tokenCache.expiresAt - 60000) {
@@ -4354,7 +4442,32 @@ Office.onReady(async info => {
   if (closeBtn) {
     closeBtn.addEventListener("click", hideReminderModal);
   }
-    
+  document.getElementById("closeEditWarning")
+          .addEventListener("click", hideEditWarningModal);
+
+  // now register the sheet-change listener
+  await Excel.run(async ctx => {
+    const sheets = ctx.workbook.worksheets;
+    sheets.load("items/name,id");
+    await ctx.sync();
+
+    // 1) Attach to every sheet that already exists
+    sheets.items.forEach(sheet => {
+      if (!sheet.name.startsWith("__cache__")) {
+        sheet.onChanged.add(handleSheetChange);
+      }
+    });
+
+    // 2) If a new sheet is ever added, attach there too
+    sheets.onAdded.add(async event => {
+      // event.worksheetId is the id of the new sheet
+      const newSheet = ctx.workbook.worksheets.getItem(event.worksheetId);
+      newSheet.onChanged.add(handleSheetChange);
+      // no need for ctx.sync() here unless you load properties
+    });
+
+    await ctx.sync();
+  });
 });
 
 
@@ -4557,7 +4670,7 @@ async function pullFromDb() {
           sheet.getRangeByIndexes(0, 0, used.rowCount, used.columnCount),
           true
         ).name = tblName;
-
+        sheet.onChanged.add(handleSheetChange);
         // Add dropdowns
         await Excel.run(async ctx => {
           const sheet = ctx.workbook.worksheets.getActiveWorksheet();
@@ -4614,7 +4727,7 @@ async function pullFromDb() {
           const cacheData = rows.map(r => orderedDbCols.map(col => r[col] ?? null));
           cacheSheet.getRangeByIndexes(1, 0, cacheData.length, orderedDbCols.length).values = cacheData;
         }
-
+        editedRows.clear();
         await ctx.sync();
       });
 
@@ -4629,6 +4742,7 @@ async function pullFromDb() {
       status.innerText = `Error pulling "${tableName}": ${err.message}`;
     }
   }
+  editedRows.clear();
 }
 
 async function pullOneTable(tableName) {
@@ -4754,7 +4868,7 @@ async function pullOneTable(tableName) {
             list: { inCellDropdown: true, source: src }
           };
         }
-
+        editedRows.clear();
         await ctx.sync();
       });
 
@@ -4779,10 +4893,10 @@ async function pullOneTable(tableName) {
       const cacheData = rows.map(r => orderedDbCols.map(col => r[col] ?? null));
       cacheSheet.getRangeByIndexes(1, 0, cacheData.length, orderedDbCols.length).values = cacheData;
     }
-
+    editedRows.clear();
     await ctx.sync();
   });
-
+  editedRows.clear();
   return rows.length;
 }
 

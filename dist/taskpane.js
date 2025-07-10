@@ -3994,7 +3994,7 @@ async function handleSheetChange(event) {
       cacheRange.load("values");
       await ctx.sync();
       const cacheValues = cacheRange.values;
-
+      const cacheRows = cacheValues.length;
       // 5) compare cell-by-cell, skipping hyperlink & date_entry
       for (let dr = 0; dr < rowCount; dr++) {
         for (let dc = 0; dc < columnCount; dc++) {

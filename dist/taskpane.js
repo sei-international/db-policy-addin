@@ -4559,7 +4559,7 @@ async function fetchDbRows(tableName) {
 // Pull data for the chosen table (or all sheets if “All Tables”)
 async function pullFromDb() {
   const status = document.getElementById("status");
-
+  editedRows.clear();
   // 1) Gather checked tables
   const checked = Array.from(
     document.querySelectorAll("#tableCheckboxContainer input[type=checkbox]:checked")
@@ -4752,6 +4752,7 @@ async function pullFromDb() {
 
 async function pullOneTable(tableName) {
   // fetch columns
+  editedRows.clear();
   const colsRes = await authFetch(`${apiBase}/columns?table=${encodeURIComponent(tableName)}`);
   if (!colsRes.ok) throw new Error(await colsRes.text());
   const dbCols = await colsRes.json();

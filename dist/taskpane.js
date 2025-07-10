@@ -3977,7 +3977,7 @@ async function handleSheetChange(event) {
       );
       headerRange.load("values");
       await ctx.sync();
-      // map display names → db columns
+      // map display names to db columns
       const headerMap = headerRange.values[0].map(
         h => DISPLAY_TO_DB[h] || h
       );
@@ -4005,8 +4005,12 @@ async function handleSheetChange(event) {
           const sheetRowIdx = rowIndex + dr;
       
           if (sheetRowIdx >= cacheRows) {
-            editedRows.add(sheetRowIdx + 1);
-            break;
+            const newVal = values[dr][dc];
+            if (newVal !== null && newVal !== "") {
+              editedRows.add(sheetRowIdx + 1);
+              break;
+            }
+            continue;
           }
           const newVal = values[dr][dc];
           const oldVal = cacheValues[rowIndex + dr][columnIndex + dc];

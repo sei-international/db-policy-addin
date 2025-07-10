@@ -4466,10 +4466,8 @@ Office.onReady(async info => {
 
     // 2) If a new sheet is ever added, attach there too
     sheets.onAdded.add(async event => {
-      // event.worksheetId is the id of the new sheet
       const newSheet = ctx.workbook.worksheets.getItem(event.worksheetId);
       newSheet.onChanged.add(handleSheetChange);
-      // no need for ctx.sync() here unless you load properties
     });
 
     await ctx.sync();
@@ -4676,6 +4674,7 @@ async function pullFromDb() {
           sheet.getRangeByIndexes(0, 0, used.rowCount, used.columnCount),
           true
         ).name = tblName;
+        editedRows.clear();
         sheet.onChanged.add(handleSheetChange);
         // Add dropdowns
         await Excel.run(async ctx => {

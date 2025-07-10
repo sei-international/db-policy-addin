@@ -4002,6 +4002,12 @@ async function handleSheetChange(event) {
           if (dbCol === "hyperlink" || dbCol === "date_entry") {
             continue;
           }
+          const sheetRowIdx = rowIndex + dr;
+      
+          if (sheetRowIdx >= cacheRows) {
+            editedRows.add(sheetRowIdx + 1);
+            break;
+          }
           const newVal = values[dr][dc];
           const oldVal = cacheValues[rowIndex + dr][columnIndex + dc];
           if (String(newVal) !== String(oldVal)) {

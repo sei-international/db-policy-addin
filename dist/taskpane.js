@@ -3823,6 +3823,7 @@ const COLUMN_MAP = {
   additional_links:    "Additional Relevant Links",
   meta_qa:             "Internal Questions & Answers",
   language:            "Policy Language",
+  updated_by:          "Last Updated by",
   // social_acceptance
   page_number:              "Page Number",
   revenue_sharing:          "Sharing Revenue of Projects",
@@ -4031,6 +4032,17 @@ async function handleSheetChange(event) {
   } finally {
     _processingChange = false;
   }
+}
+async function getCurrentUserEmail() {
+  const token = await getToken();          
+  // Split out the payload, base64‐decode, parse JSON
+  const payload = token.split('.')[1]
+    .replace(/-/g, '+')
+    .replace(/_/g, '/');
+  const decoded = atob(payload);
+  const claims  = JSON.parse(decoded);
+  // Try preferred_username, then upn
+  return claims.preferred_username || claims.upn || '';
 }
 function showEditWarningModal() {
   document.getElementById("editWarningModal").classList.add("visible");
@@ -4599,11 +4611,11 @@ async function pullFromDb() {
       if (tableName === "policies") {
         const primary = ["country", "doc_code", "hyperlink", "policy_year", "policy_name", "policy_format"];
         const rest = dbCols.filter(c => !primary.includes(c));
-        orderedDbCols = [...primary, ...rest];
+        orderedDbCols = [...primary, ...rest, "updated_by"];
       } else {
         const extras = ["hyperlink", "country", "policy_year", "policy_name", "policy_format", "date_entry"];
         const rest = dbCols.filter(c => c !== "doc_code" && !extras.includes(c));
-        orderedDbCols = ["doc_code", ...extras.filter(c => dbCols.includes(c)), ...rest];
+        orderedDbCols = ["doc_code", ...extras.filter(c => dbCols.includes(c)), ...rest, "updated_by"];
       }
       const headers = orderedDbCols.map(c => COLUMN_MAP[c] || c);
 
@@ -4765,13 +4777,13 @@ async function pullOneTable(tableName) {
   let orderedDbCols;
   if (tableName === "policies") {
     const primary = ["country", "doc_code", "hyperlink", "policy_year", "policy_name", "policy_format"];
-    orderedDbCols = [...primary, ...dbCols.filter(c => !primary.includes(c))];
+    orderedDbCols = [...primary, ...dbCols.filter(c => !primary.includes(c)), "updated_by"];
   } else {
     const extras = ["hyperlink", "country", "policy_year", "policy_name", "policy_format", "date_entry"];
     orderedDbCols = [
       "doc_code",
       ...extras.filter(c => dbCols.includes(c)),
-      ...dbCols.filter(c => c !== "doc_code" && !extras.includes(c))
+      ...dbCols.filter(c => c !== "doc_code" && !extras.includes(c)), "updated_by"
     ];
   }
   const headers = orderedDbCols.map(c => COLUMN_MAP[c] || c);
@@ -4914,7 +4926,7 @@ async function pullOneTable(tableName) {
 async function pushToDb() {
   const status = document.getElementById("status");
   status.innerText = "Preparing to push…";
-
+  const userEmail = await getCurrentUserEmail();
   // 1) Load valid table names
   let validTables;
   try {
@@ -5096,6 +5108,16 @@ async function pushToDb() {
       });
       const payload = await res.json();
       if (!res.ok) throw new Error(payload.error || JSON.stringify(payload));
+      await authFetch(`${apiBase}/logChange`, {
+        method: "POST",
+        body: JSON.stringify({
+          changes: rows.map(r => ({
+            record_id:      r.doc_code,
+            updated_by:     userEmail,
+            columns_changed:r.columns_changed || []
+          }))
+        })
+      });
       status.innerText = `✅ Pushed ${rows.length} to "${tableName}".`;
       scheduleReminder();
       // Refresh cache for just this table

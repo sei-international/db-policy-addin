@@ -3978,7 +3978,7 @@ async function handleSheetChange(event) {
       );
       headerRange.load("values");
       await ctx.sync();
-      // map display names to db columns
+      // map display names → db columns
       const headerMap = headerRange.values[0].map(
         h => DISPLAY_TO_DB[h] || h
       );
@@ -3995,22 +3995,12 @@ async function handleSheetChange(event) {
       cacheRange.load("values");
       await ctx.sync();
       const cacheValues = cacheRange.values;
-      const cacheRows = cacheValues.length;
+
       // 5) compare cell-by-cell, skipping hyperlink & date_entry
       for (let dr = 0; dr < rowCount; dr++) {
         for (let dc = 0; dc < columnCount; dc++) {
           const dbCol = headerMap[dc];
           if (dbCol === "hyperlink" || dbCol === "date_entry") {
-            continue;
-          }
-          const sheetRowIdx = rowIndex + dr;
-      
-          if (sheetRowIdx >= cacheRows) {
-            const newVal = values[dr][dc];
-            if (newVal !== null && newVal !== "") {
-              editedRows.add(sheetRowIdx + 1);
-              break;
-            }
             continue;
           }
           const newVal = values[dr][dc];

@@ -4501,7 +4501,9 @@ async function populateTableCheckboxes() {
     }
     const tables = await res.json(); 
 
-    const unique = [...new Set(tables)].sort((a, b) => {
+    const unique = [...new Set(tables)]
+    .filter(t => t !== "change_log")
+    .sort((a, b) => {
       if (a === "policies") return -1;
       if (b === "policies") return 1;
       return a.localeCompare(b);

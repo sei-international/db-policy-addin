@@ -4220,7 +4220,7 @@ async function hasUnpushedChanges(tableName) {
 
 
 function setupTabs() {
-  ['connect','pull','faq', 'sql'].forEach(tabKey => {
+  ['connect','pull','faq'].forEach(tabKey => {
     const tabEl   = document.getElementById(`tab-${tabKey}`);
     const panelEl = document.getElementById(`panel-${tabKey}`);
   
@@ -4229,7 +4229,7 @@ function setupTabs() {
       if (tabEl.classList.contains('disabled')) return;
   
       // switch active tab
-      ['connect','pull','faq','sql'].forEach(other => {
+      ['connect','pull','faq'].forEach(other => {
         document.getElementById(`tab-${other}`)
           .classList.toggle('active', other===tabKey);
         document.getElementById(`panel-${other}`)
@@ -4303,7 +4303,7 @@ document.getElementById("connectForm").addEventListener("submit", async (evt) =>
     await populateTableCheckboxes();
     isConnected = true;
     document.getElementById("tab-pull").classList.remove("disabled");
-    document.getElementById("tab-sql").classList.remove("disabled");
+    // document.getElementById("tab-sql").classList.remove("disabled");
   } catch (err) {
     status.innerText = `❌ Something unexpected occured while connecting to the server and your request timed out. Please refresh and try again.`;
   }
@@ -4488,13 +4488,13 @@ function attachEventHandlers() {
   document.getElementById("push") .onclick = pushToDb;
 
   // SQL tab handlers
-  const runBtn = document.getElementById("runSql");
-  if (runBtn) runBtn.addEventListener("click", runCustomQuery);
-  const exportBtn = document.getElementById("exportSqlToSheet");
-  if (exportBtn) exportBtn.addEventListener("click", exportLastSqlResultsToSheet);
+  // const runBtn = document.getElementById("runSql");
+  // if (runBtn) runBtn.addEventListener("click", runCustomQuery);
+  // const exportBtn = document.getElementById("exportSqlToSheet");
+  // if (exportBtn) exportBtn.addEventListener("click", exportLastSqlResultsToSheet);
 }
 
-let _lastSqlResults = null;
+// let _lastSqlResults = null;
 
 async function runCustomQuery() {
   const sql = (document.getElementById("sqlText")||{value:""}).value.trim();

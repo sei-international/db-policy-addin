@@ -4303,6 +4303,7 @@ document.getElementById("connectForm").addEventListener("submit", async (evt) =>
     await populateTableCheckboxes();
     isConnected = true;
     document.getElementById("tab-pull").classList.remove("disabled");
+    document.getElementById("tab-sql").classList.remove("disabled");
   } catch (err) {
     status.innerText = `❌ Something unexpected occured while connecting to the server and your request timed out. Please refresh and try again.`;
   }

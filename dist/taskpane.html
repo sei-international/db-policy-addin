@@ -18,6 +18,7 @@
     <div id="tab-connect" class="tab active">Login</div>
     <div id="tab-pull"    class="tab disabled">Database</div>
     <div id="tab-faq"    class="tab">FAQ</div>
+    <div id="tab-sql"     class="tab disabled">SQL</div>
   </div>
   
   <div id="panel-connect" class="content" style="display:block;">
@@ -101,7 +102,18 @@
       </details>
     </div>
   </div>
-
+  
+  <div id="panel-sql" class="content" style="display:none;">
+    <h2>Run custom SQL (dev only)</h2>
+    <p style="margin-top:0">Enter a <strong>SELECT</strong> query and press <em>Run</em>. Results are limited to 500 rows.</p>
+    <textarea id="sqlText" rows="7" style="width:100%;" placeholder="SELECT TOP 10 doc_code, country, policy_name FROM policies"></textarea>
+    <div style="margin-top:8px;">
+      <button id="runSql">Run</button>
+      <button id="exportSqlToSheet">Export to sheet</button>
+    </div>
+    <div id="sqlStatus" style="margin-top:8px;color:#c00;"></div>
+    <div id="sqlResults" style="margin-top:12px;overflow:auto;max-height:360px;"></div>
+  </div>
 
   <script src="https://alcdn.msauth.net/browser/2.38.0/js/msal-browser.min.js"></script>
   <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>

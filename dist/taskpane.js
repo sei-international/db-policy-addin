@@ -4220,7 +4220,7 @@ async function hasUnpushedChanges(tableName) {
 
 
 function setupTabs() {
-  ['connect','pull','faq'].forEach(tabKey => {
+  ['connect','pull','faq', 'sql'].forEach(tabKey => {
     const tabEl   = document.getElementById(`tab-${tabKey}`);
     const panelEl = document.getElementById(`panel-${tabKey}`);
   
@@ -4229,7 +4229,7 @@ function setupTabs() {
       if (tabEl.classList.contains('disabled')) return;
   
       // switch active tab
-      ['connect','pull','faq'].forEach(other => {
+      ['connect','pull','faq','sql'].forEach(other => {
         document.getElementById(`tab-${other}`)
           .classList.toggle('active', other===tabKey);
         document.getElementById(`panel-${other}`)
@@ -4485,6 +4485,120 @@ Office.onReady(async info => {
 function attachEventHandlers() {
   document.getElementById("pull") .onclick = pullFromDb;
   document.getElementById("push") .onclick = pushToDb;
+
+  // SQL tab handlers
+  const runBtn = document.getElementById("runSql");
+  if (runBtn) runBtn.addEventListener("click", runCustomQuery);
+  const exportBtn = document.getElementById("exportSqlToSheet");
+  if (exportBtn) exportBtn.addEventListener("click", exportLastSqlResultsToSheet);
+}
+
+let _lastSqlResults = null;
+
+async function runCustomQuery() {
+  const sql = (document.getElementById("sqlText")||{value:""}).value.trim();
+  const statusEl = document.getElementById("sqlStatus");
+  const resultsEl = document.getElementById("sqlResults");
+  resultsEl.innerHTML = "";
+  statusEl.innerText = "";
+
+  if (!sql) { statusEl.innerText = "Please enter a SQL SELECT statement."; return; }
+
+  // quick client-side guard
+  // if (!/^\s*select\b/i.test(sql)) {
+  //   statusEl.innerText = "Only SELECT queries are permitted for this dev endpoint.";
+  //   return;
+  // }
+
+  try {
+    statusEl.innerText = "Running...";
+    const res = await authFetch(`${apiBase}/query`, {
+      method: "POST",
+      body: JSON.stringify({ sql }),
+      headers: { "Content-Type": "application/json" }
+    });
+    if (!res.ok) {
+      const txt = await res.text();
+      throw new Error(`API error ${res.status}: ${txt}`);
+    }
+    const payload = await res.json();
+    _lastSqlResults = payload.rows || [];
+    renderRowsAsTable(_lastSqlResults, resultsEl);
+    statusEl.innerText = `Returned ${_lastSqlResults.length} row(s).`;
+  } catch (err) {
+    console.error("SQL run failed:", err);
+    statusEl.innerText = `Error: ${err.message}`;
+  }
+}
+
+function renderRowsAsTable(rows, container) {
+  if (!rows || !rows.length) {
+    container.innerText = "No rows returned.";
+    return;
+  }
+  const cols = Object.keys(rows[0]);
+  const tbl = document.createElement("table");
+  tbl.style.borderCollapse = "collapse";
+  tbl.style.width = "100%";
+  tbl.style.fontSize = "12px";
+
+  const thead = tbl.createTHead();
+  const hr = thead.insertRow();
+  cols.forEach(c => {
+    const th = document.createElement("th");
+    th.style.border = "1px solid #ddd";
+    th.style.padding = "6px";
+    th.style.textAlign = "left";
+    th.style.fontWeight = "700";
+    th.textContent = c;
+    hr.appendChild(th);
+  });
+
+  const tb = tbl.createTBody();
+  rows.forEach(r => {
+    const tr = tb.insertRow();
+    cols.forEach(c => {
+      const td = tr.insertCell();
+      td.style.border = "1px solid #eee";
+      td.style.padding = "6px";
+      const v = r[c];
+      td.textContent = v == null ? "" : String(v);
+    });
+  });
+
+  container.innerHTML = "";
+  container.appendChild(tbl);
+}
+
+async function exportLastSqlResultsToSheet() {
+  const rows = _lastSqlResults;
+  const statusEl = document.getElementById("sqlStatus");
+  if (!rows || !rows.length) {
+    statusEl.innerText = "No results to export. Run a query first.";
+    return;
+  }
+  try {
+    await Excel.run(async ctx => {
+      const sheetName = "Query Results";
+      let old = ctx.workbook.worksheets.getItemOrNullObject(sheetName);
+      await ctx.sync();
+      if (!old.isNullObject) {
+        old.delete();
+        await ctx.sync();
+      }
+      const sheet = ctx.workbook.worksheets.add(sheetName);
+      const headers = Object.keys(rows[0]);
+      sheet.getRangeByIndexes(0, 0, 1, headers.length).values = [headers];
+      const data = rows.map(r => headers.map(h => r[h] ?? null));
+      sheet.getRangeByIndexes(1, 0, data.length, headers.length).values = data;
+      sheet.activate();
+      await ctx.sync();
+    });
+    statusEl.innerText = `Exported ${rows.length} rows to "Query Results".`;
+  } catch (err) {
+    console.error("Failed write to Excel:", err);
+    statusEl.innerText = `Failed to export: ${err.message}`;
+  }
 }
 
 async function populateTableCheckboxes() {

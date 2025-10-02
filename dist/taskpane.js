@@ -4718,11 +4718,11 @@ async function pullFromDb() {
       if (tableName === "policies") {
         const primary = ["country", "doc_code", "hyperlink", "policy_year", "policy_name", "policy_format"];
         const rest = dbCols.filter(c => !primary.includes(c));
-        orderedDbCols = [...primary, ...rest, "updated_by"];
+        orderedDbCols = Array.from(new Set([...primary, ...rest]));
       } else {
         const extras = ["hyperlink", "country", "policy_year", "policy_name", "policy_format", "date_entry"];
         const rest = dbCols.filter(c => c !== "doc_code" && !extras.includes(c));
-        orderedDbCols = ["doc_code", ...extras.filter(c => dbCols.includes(c)), ...rest, "updated_by"];
+        orderedDbCols = Array.from(new Set(["doc_code", ...extras.filter(c => dbCols.includes(c)), ...rest]));
       }
       const headers = orderedDbCols.map(c => COLUMN_MAP[c] || c);
 
@@ -4884,14 +4884,14 @@ async function pullOneTable(tableName) {
   let orderedDbCols;
   if (tableName === "policies") {
     const primary = ["country", "doc_code", "hyperlink", "policy_year", "policy_name", "policy_format"];
-    orderedDbCols = [...primary, ...dbCols.filter(c => !primary.includes(c)), "updated_by"];
+    orderedDbCols = Array.from(new Set([...primary, ...dbCols.filter(c => !primary.includes(c))]));
   } else {
     const extras = ["hyperlink", "country", "policy_year", "policy_name", "policy_format", "date_entry"];
-    orderedDbCols = [
+    orderedDbCols = Array.from(new Set([
       "doc_code",
       ...extras.filter(c => dbCols.includes(c)),
-      ...dbCols.filter(c => c !== "doc_code" && !extras.includes(c)), "updated_by"
-    ];
+      ...dbCols.filter(c => c !== "doc_code" && !extras.includes(c))
+    ]));
   }
   const headers = orderedDbCols.map(c => COLUMN_MAP[c] || c);
 
